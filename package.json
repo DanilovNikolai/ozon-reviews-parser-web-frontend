@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.910.0",
     "axios": "^1.12.2",
     "next": "15.5.5",
     "postcss": "^8.5.6",
