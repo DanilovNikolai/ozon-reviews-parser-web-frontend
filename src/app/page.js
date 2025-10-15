@@ -1,28 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function HomePage() {
-  const [linksText, setLinksText] = useState('');
+  const [inputLink, setInputLink] = useState('');
+  const [links, setLinks] = useState([]);
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState('1');
   const [loading, setLoading] = useState(false);
   const [resp, setResp] = useState(null);
-  const [parsedLinks, setParsedLinks] = useState([]);
 
-  // 🔍 при изменении текста пересчитываем список ссылок
-  useEffect(() => {
-    const links = linksText
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .map((link) => ({
-        text: link,
-        valid: /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i.test(link),
-      }));
-    setParsedLinks(links);
-  }, [linksText]);
+  const ozonRegex = /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i;
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -32,7 +22,7 @@ export default function HomePage() {
     try {
       const form = new FormData();
       form.append('mode', mode);
-      form.append('linksText', linksText);
+      form.append('linksText', links.join('\n'));
       if (file) form.append('file', file);
 
       const res = await axios.post('/api/parse', form, {
@@ -42,72 +32,143 @@ export default function HomePage() {
       setResp(res.data);
     } catch (err) {
       console.error(err);
-      const message =
-        err.response?.data?.error ||
-        err.message ||
-        'Неизвестная ошибка при отправке запроса';
-      setResp({ error: message });
+      setResp({
+        error: err.response?.data?.error || 'Ошибка при запросе к серверу',
+      });
     } finally {
       setLoading(false);
     }
   }
 
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddLink();
+    }
+  }
+
+  function handleAddLink() {
+    const trimmed = inputLink.trim();
+    if (!trimmed) return;
+
+    if (!ozonRegex.test(trimmed)) {
+      toast.error('Некорректная ссылка!');
+      setInputLink('');
+      return;
+    }
+
+    if (links.includes(trimmed)) {
+      toast('⚠️ Такая ссылка уже есть!');
+      setInputLink('');
+      return;
+    }
+
+    setLinks([...links, trimmed]);
+    toast.success('Ссылка добавлена!');
+    setInputLink('');
+  }
+
+  function clearLinks() {
+    setLinks([]);
+    toast('🧹 Ссылки очищены.');
+  }
+
+  function clearFile() {
+    setFile(null);
+    document.getElementById('fileInput').value = '';
+    toast('🗑 Файл очищен.');
+  }
+
+  function removeLink(linkToRemove) {
+    setLinks(links.filter((l) => l !== linkToRemove));
+  }
+
   return (
-    <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50">
+    <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
+      <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
+
       <div className="w-full max-w-2xl bg-white shadow-md rounded-xl p-8">
         <h1 className="text-3xl font-bold mb-4 text-blue-600 text-center">
           🧩 Ozon Reviews Parser — Demo
         </h1>
 
         <form onSubmit={onSubmit} className="space-y-6">
-          {/* 🔹 Текстовое поле */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Список ссылок (по одной в строке)
-            </label>
-            <textarea
-              value={linksText}
-              onChange={(e) => setLinksText(e.target.value)}
-              rows={8}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="https://www.ozon.ru/product/..."
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Добавить ссылку</label>
+            <div className="flex gap-2">
+              <input
+                value={inputLink}
+                onChange={(e) => setInputLink(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handleAddLink}
+                type="text"
+                className="flex-grow border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                placeholder="https://www.ozon.ru/product/..."
+              />
 
-            {/* 🔹 Список бейджей */}
-            {parsedLinks.some((l) => l.valid) && (
+              <button
+                type="button"
+                onClick={clearLinks}
+                disabled={!links.length}
+                className={`px-3 py-2 text-sm rounded-lg border transition ${
+                  links.length
+                    ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 cursor-pointer'
+                    : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                🧹 Очистить
+              </button>
+            </div>
+
+            {links.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2 bg-gray-50 border border-gray-200 rounded-md p-3">
-                {parsedLinks
-                  .filter((l) => l.valid)
-                  .map((link, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center text-xs font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full border border-green-300"
+                {links.map((link, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center text-xs font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full border border-green-300"
+                  >
+                    ✅ {link}
+                    <button
+                      type="button"
+                      onClick={() => removeLink(link)}
+                      className="ml-2 text-red-500 hover:text-red-700 cursor-pointer"
                     >
-                      ✅ {link.text}
-                    </span>
-                  ))}
+                      ✕
+                    </button>
+                  </span>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Загрузка файла */}
+          {/* 🔹 Файл */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Или загрузить файл (.txt или .xlsx)
+              Или загрузить файл (.xlsx)
             </label>
-            <input
-              type="file"
-              accept=".txt,.xlsx"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                id="fileInput"
+                type="file"
+                accept=".txt,.xlsx"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {file && (
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  className="px-3 py-3 text-sm bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition cursor-pointer"
+                >
+                  🗑 Очистить
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Режим */}
+          {/* 🔹 Режим */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Режим парсинга
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Режим парсинга</label>
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
@@ -119,7 +180,7 @@ export default function HomePage() {
             </select>
           </div>
 
-          {/* Кнопка */}
+          {/* 🔹 Кнопка запуска */}
           <div className="flex justify-center">
             <button
               type="submit"
@@ -127,7 +188,7 @@ export default function HomePage() {
               className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
                 loading
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
               }`}
             >
               {loading ? 'Запуск...' : '🚀 Запустить парсер'}
@@ -135,11 +196,9 @@ export default function HomePage() {
           </div>
         </form>
 
-        {/* Результаты */}
+        {/* 🔹 Результат */}
         <section className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Результат
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
           {resp ? (
             resp.error ? (
               <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap">
