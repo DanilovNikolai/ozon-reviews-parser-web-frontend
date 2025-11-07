@@ -30,7 +30,7 @@ export async function POST(req) {
       );
     }
 
-    // 1️⃣ Создаём Excel, если пришли ссылки
+    // Создаём Excel, если пришли ссылки
     let inputBuffer;
     let filename;
     if (linksText) {
@@ -46,13 +46,13 @@ export async function POST(req) {
       filename = `links_${Date.now()}.xlsx`;
     }
 
-    // 2️⃣ Если был загружен файл — просто используем его
+    // Если был загружен файл — просто используем его
     if (file && file.size > 0) {
       inputBuffer = Buffer.from(await file.arrayBuffer());
       filename = file.name;
     }
 
-    // 3️⃣ Заливаем на S3
+    // Заливаем на S3
     const key = `${UPLOAD_FOLDER}${Date.now()}_${filename}`;
     await s3Client.send(
       new PutObjectCommand({
@@ -66,7 +66,7 @@ export async function POST(req) {
     const s3InputFileUrl = `https://storage.yandexcloud.net/${BUCKET}/${key}`;
     console.log('✅ Uploaded input file:', s3InputFileUrl);
 
-    // 4️⃣ Отправляем запрос на Railway
+    // Отправляем запрос на Railway
     const res = await fetch(`${process.env.RAILWAY_API_URL}/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
