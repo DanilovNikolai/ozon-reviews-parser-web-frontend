@@ -30,11 +30,13 @@ export default function HomePage() {
       });
 
       setResp(res.data);
+      toast.success('✅ Парсинг завершён!');
     } catch (err) {
       console.error(err);
       setResp({
         error: err.response?.data?.error || 'Ошибка при запросе к серверу',
       });
+      toast.error('❌ Ошибка при парсинге');
     } finally {
       setLoading(false);
     }
@@ -83,6 +85,19 @@ export default function HomePage() {
     setLinks(links.filter((l) => l !== linkToRemove));
   }
 
+  // 🔹 Функция определения ссылки на Excel из ответа
+  function getDownloadLink(resp) {
+    if (!resp) return null;
+    const link =
+      resp?.excelUrl ||
+      resp?.fileUrl ||
+      resp?.url ||
+      (typeof resp === 'string' && resp.includes('http') ? resp : null);
+    return link;
+  }
+
+  const downloadLink = getDownloadLink(resp);
+
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
       <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
@@ -93,6 +108,7 @@ export default function HomePage() {
         </h1>
 
         <form onSubmit={onSubmit} className="space-y-6">
+          {/* 🔹 Добавление ссылок */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Добавить ссылку</label>
             <div className="flex gap-2">
@@ -199,16 +215,29 @@ export default function HomePage() {
         {/* 🔹 Результат */}
         <section className="mt-8">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
+
           {resp ? (
             resp.error ? (
               <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap">
                 <strong className="block mb-1">Ошибка:</strong>
                 {resp.error}
               </div>
+            ) : downloadLink ? (
+              <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm text-center">
+                <p className="mb-2 font-medium">✅ Парсинг успешно завершён!</p>
+                <a
+                  href={downloadLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+                >
+                  Скачать Excel-файл
+                </a>
+              </div>
             ) : (
-              <pre className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm overflow-auto max-h-80">
-                {JSON.stringify(resp, null, 2)}
-              </pre>
+              <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm">
+                Не удалось определить ссылку на результат.
+              </div>
             )
           ) : (
             <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
