@@ -30,11 +30,17 @@ export default function HomePage() {
       });
 
       setResp(res.data);
+      if (res.data?.success && res.data?.s3OutputUrl) {
+        toast.success('✅ Парсинг завершён!');
+      } else {
+        toast('ℹ️ Запрос выполнен, проверьте результат.');
+      }
     } catch (err) {
       console.error(err);
       setResp({
         error: err.response?.data?.error || 'Ошибка при запросе к серверу',
       });
+      toast.error('❌ Ошибка при парсинге');
     } finally {
       setLoading(false);
     }
@@ -199,16 +205,29 @@ export default function HomePage() {
         {/* 🔹 Результат */}
         <section className="mt-8">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
+
           {resp ? (
             resp.error ? (
               <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap">
                 <strong className="block mb-1">Ошибка:</strong>
                 {resp.error}
               </div>
+            ) : resp.success && resp.s3OutputUrl ? (
+              <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm text-center">
+                <p className="mb-2 font-medium">✅ Парсинг успешно завершён!</p>
+                <a
+                  href={resp.s3OutputUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+                >
+                  Скачать Excel-файл
+                </a>
+              </div>
             ) : (
-              <pre className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm overflow-auto max-h-80">
-                {JSON.stringify(resp, null, 2)}
-              </pre>
+              <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm">
+                Ответ получен, но ссылка не найдена.
+              </div>
             )
           ) : (
             <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
