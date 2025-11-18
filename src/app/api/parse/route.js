@@ -1,5 +1,4 @@
 // app/api/parse/route.js
-
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as XLSX from 'xlsx';
@@ -30,7 +29,7 @@ export async function POST(req) {
       );
     }
 
-    // Создаём Excel, если пришли ссылки
+    // Создание Excel при вводе ссылок
     let inputBuffer;
     let filename;
     if (linksText) {
@@ -46,13 +45,13 @@ export async function POST(req) {
       filename = `links_${Date.now()}.xlsx`;
     }
 
-    // Если был загружен файл — просто используем его
+    // Файл был загружен — используем его
     if (file && file.size > 0) {
       inputBuffer = Buffer.from(await file.arrayBuffer());
       filename = file.name;
     }
 
-    // Заливаем на S3
+    // Загружаем Excel на S3
     const key = `${UPLOAD_FOLDER}${Date.now()}_${filename}`;
     await s3Client.send(
       new PutObjectCommand({
@@ -66,16 +65,40 @@ export async function POST(req) {
     const s3InputFileUrl = `https://storage.yandexcloud.net/${BUCKET}/${key}`;
     console.log('✅ Uploaded input file:', s3InputFileUrl);
 
-    // Отправляем запрос на Railway
-    const res = await fetch(`${process.env.RAILWAY_API_URL}/parse`, {
+    // Отправляем запрос на сервер (бэкенд)
+    const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ s3InputFileUrl, mode }),
     });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка Railway');
+    // Попытка прочитать JSON, но безопасная
+    let data = null;
+    try {
+      data = await backendRes.json();
+    } catch (jsonErr) {
+      // бэкенд отправил не JSON — считаем это ошибкой
+      return NextResponse.json(
+        {
+          error: 'Ошибка в процессе парсинга.',
+        },
+        { status: 500 }
+      );
+    }
 
+    // Сервер вернул ошибку
+    if (!backendRes.ok || data.errorOccurred) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: data.error || 'Ошибка в процессе парсинга',
+          s3OutputUrl: data.s3OutputUrl || null,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Всё хорошо
     return NextResponse.json(data);
   } catch (err) {
     console.error('Ошибка /api/parse:', err);
