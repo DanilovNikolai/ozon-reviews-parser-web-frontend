@@ -24,7 +24,7 @@ export async function POST(req) {
 
     if (!linksText && !file) {
       return NextResponse.json(
-        { error: 'Необходимо ввести ссылки или загрузить файл' },
+        { success: false, error: 'Необходимо ввести ссылки или загрузить файл', s3OutputUrl: null },
         { status: 400 }
       );
     }
@@ -72,36 +72,44 @@ export async function POST(req) {
       body: JSON.stringify({ s3InputFileUrl, mode }),
     });
 
-    // Попытка прочитать JSON, но безопасная
     let data = null;
     try {
       data = await backendRes.json();
     } catch (jsonErr) {
       // бэкенд отправил не JSON — считаем это ошибкой
+      console.error('Ошибка парсинга JSON от бэкенда:', jsonErr);
       return NextResponse.json(
         {
+          success: false,
           error: 'Ошибка в процессе парсинга.',
+          s3OutputUrl: null,
         },
         { status: 500 }
       );
     }
 
-    // Сервер вернул ошибку
-    if (!backendRes.ok || data.errorOccurred) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: data.error || 'Ошибка в процессе парсинга',
-          s3OutputUrl: data.s3OutputUrl || null,
-        },
-        { status: 200 }
-      );
-    }
+    const success = Boolean(data?.success);
+    const error = data?.error || null;
+    const s3OutputUrl = data?.s3OutputUrl || null;
 
-    // Всё хорошо
-    return NextResponse.json(data);
+    // Всегда возвращаем 200, а успех/ошибка — через поле success/error
+    return NextResponse.json(
+      {
+        success,
+        error,
+        s3OutputUrl,
+      },
+      { status: 200 }
+    );
   } catch (err) {
     console.error('Ошибка /api/parse:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: err.message || 'Неизвестная ошибка /api/parse',
+        s3OutputUrl: null,
+      },
+      { status: 500 }
+    );
   }
 }
