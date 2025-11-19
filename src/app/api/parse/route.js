@@ -52,7 +52,7 @@ export async function POST(req) {
     }
 
     // Загружаем Excel на S3
-    const key = `${UPLOAD_FOLDER}${Date.now()}_${filename}`;
+    const key = `${UPLOAD_FOLDER}_${filename}`;
     await s3Client.send(
       new PutObjectCommand({
         Bucket: BUCKET,
