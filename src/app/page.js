@@ -27,7 +27,14 @@ export default function HomePage() {
 
       const res = await axios.post('/api/parse', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        validateStatus: () => true, // ⚠ Очень важно — не бросать ошибку на 204
       });
+
+      // 🔥 Полностью игнорируем второй процесс
+      if (res.status === 204) {
+        console.log('⚠ Второй процесс отклонён — UI не обновляется.');
+        return; // ⬅ UI НЕ меняется, toast НЕ показываем
+      }
 
       const data = res.data;
       setResp(data);
