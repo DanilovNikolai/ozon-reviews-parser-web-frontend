@@ -29,9 +29,10 @@ export async function POST(req) {
       );
     }
 
-    // Создание Excel при вводе ссылок
+    // --- Создание Excel при вводе ссылок ---
     let inputBuffer;
     let filename;
+
     if (linksText) {
       const links = linksText
         .split('\n')
@@ -45,13 +46,12 @@ export async function POST(req) {
       filename = `links_${Date.now()}.xlsx`;
     }
 
-    // Файл был загружен — используем его
     if (file && file.size > 0) {
       inputBuffer = Buffer.from(await file.arrayBuffer());
       filename = file.name;
     }
 
-    // Загружаем Excel на S3
+    // --- Загружаем Excel на S3 ---
     const key = `${UPLOAD_FOLDER}${filename}`;
     await s3Client.send(
       new PutObjectCommand({
@@ -65,34 +65,33 @@ export async function POST(req) {
     const s3InputFileUrl = `https://storage.yandexcloud.net/${BUCKET}/${key}`;
     console.log('✅ Uploaded input file:', s3InputFileUrl);
 
-    // Отправляем запрос на сервер (бэкенд)
+    // --- Отправляем запрос на backend ---
     const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ s3InputFileUrl, mode }),
     });
 
+    // 🔥 Если backend вернул 204 — молча выходим, ничего НЕ шлём клиенту
+    if (backendRes.status === 204) {
+      console.log('⚠ Backend: second process rejected — UI not notified.');
+      return new NextResponse(null, { status: 204 });
+    }
+
+    // --- Пытаемся прочитать JSON, но мягко ---
     let data = null;
     try {
       data = await backendRes.json();
-    } catch (jsonErr) {
-      // бэкенд отправил не JSON — считаем это ошибкой
-      console.error('Ошибка парсинга JSON от бэкенда:', jsonErr);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Ошибка в процессе парсинга.',
-          s3OutputUrl: null,
-        },
-        { status: 500 }
-      );
+    } catch {
+      // Если JSON не прочитан — тихо завершаем, ничего не отправляем клиенту
+      console.warn('⚠ Backend did not return JSON — ignoring.');
+      return new NextResponse(null, { status: 204 });
     }
 
     const success = Boolean(data?.success);
     const error = data?.error || null;
     const s3OutputUrl = data?.s3OutputUrl || null;
 
-    // Всегда возвращаем 200, а успех/ошибка — через поле success/error
     return NextResponse.json(
       {
         success,
