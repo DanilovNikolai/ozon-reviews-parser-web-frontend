@@ -24,7 +24,11 @@ export async function POST(req) {
 
     if (!linksText && !file) {
       return NextResponse.json(
-        { success: false, error: 'Необходимо ввести ссылки или загрузить файл', s3OutputUrl: null },
+        {
+          success: false,
+          error: 'Необходимо ввести ссылки или загрузить файл',
+          jobId: null,
+        },
         { status: 400 }
       );
     }
@@ -65,38 +69,44 @@ export async function POST(req) {
     const s3InputFileUrl = `https://storage.yandexcloud.net/${BUCKET}/${key}`;
     console.log('✅ Uploaded input file:', s3InputFileUrl);
 
-    // --- Отправляем запрос на backend ---
+    // --- Отправляем запрос на backend — только старт задачи ---
     const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ s3InputFileUrl, mode }),
     });
 
-    // 🔥 Если backend вернул 204 — молча выходим, ничего НЕ шлём клиенту
-    if (backendRes.status === 204) {
-      console.log('⚠ Backend: second process rejected — UI not notified.');
-      return new NextResponse(null, { status: 204 });
-    }
-
-    // --- Пытаемся прочитать JSON, но мягко ---
-    let data = null;
+    let data;
     try {
       data = await backendRes.json();
-    } catch {
-      // Если JSON не прочитан — тихо завершаем, ничего не отправляем клиенту
-      console.warn('⚠ Backend did not return JSON — ignoring.');
-      return new NextResponse(null, { status: 204 });
+    } catch (e) {
+      console.error('Ошибка парсинга JSON от backend /parse:', e);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Ошибка запуска задачи на бэкенде',
+          jobId: null,
+        },
+        { status: 500 }
+      );
     }
 
-    const success = Boolean(data?.success);
-    const error = data?.error || null;
-    const s3OutputUrl = data?.s3OutputUrl || null;
+    if (!data?.success || !data?.jobId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: data?.error || 'Не удалось создать задачу',
+          jobId: null,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {
-        success,
-        error,
-        s3OutputUrl,
+        success: true,
+        error: null,
+        jobId: data.jobId,
       },
       { status: 200 }
     );
@@ -106,7 +116,7 @@ export async function POST(req) {
       {
         success: false,
         error: err.message || 'Неизвестная ошибка /api/parse',
-        s3OutputUrl: null,
+        jobId: null,
       },
       { status: 500 }
     );
