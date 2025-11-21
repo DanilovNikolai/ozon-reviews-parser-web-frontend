@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-// const POLLING_INTERVAL = 10000;
+const POLLING_INTERVAL = 10000;
 
 export default function HomePage() {
   const [inputLink, setInputLink] = useState('');
@@ -31,81 +31,81 @@ export default function HomePage() {
   }, []);
 
   // ==== ПОЛЛИНГ СТАТУСА ПО jobId ====
-  // useEffect(() => {
-  //   if (!jobId) return;
+  useEffect(() => {
+    if (!jobId) return;
 
-  //   let cancelled = false;
+    let cancelled = false;
 
-  //   async function pollOnce() {
-  //     try {
-  //       const res = await axios.get('/api/status', {
-  //         params: { jobId },
-  //       });
+    async function pollOnce() {
+      try {
+        const res = await axios.get('/api/status', {
+          params: { jobId },
+        });
 
-  //       const data = res.data;
-  //       if (cancelled) return;
+        const data = res.data;
+        if (cancelled) return;
 
-  //       if (!data.success) {
-  //         console.warn('Неуспешный статус задачи:', data);
-  //         return;
-  //       }
+        if (!data.success) {
+          console.warn('Неуспешный статус задачи:', data);
+          return;
+        }
 
-  //       setJobStatus(data);
+        setJobStatus(data);
 
-  //       const { status, s3OutputUrl, error } = data;
+        const { status, s3OutputUrl, error } = data;
 
-  //       if (status === 'completed') {
-  //         setLoading(false);
-  //         setResp({
-  //           success: true,
-  //           error: null,
-  //           s3OutputUrl: s3OutputUrl || null,
-  //         });
-  //         toast.success('✅ Парсинг успешно завершён!');
-  //         if (typeof window !== 'undefined') {
-  //           window.localStorage.removeItem('ozonParserJobId');
-  //         }
-  //         setJobId(null);
-  //       } else if (status === 'error') {
-  //         setLoading(false);
-  //         setResp({
-  //           success: false,
-  //           error: error || 'Ошибка парсинга',
-  //           s3OutputUrl: s3OutputUrl || null,
-  //         });
-  //         toast.error('❌ Парсинг завершён с ошибкой');
-  //         if (typeof window !== 'undefined') {
-  //           window.localStorage.removeItem('ozonParserJobId');
-  //         }
-  //         setJobId(null);
-  //       } else if (status === 'cancelled') {
-  //         setLoading(false);
-  //         setResp({
-  //           success: false,
-  //           error: 'Парсинг был отменён',
-  //           s3OutputUrl: null,
-  //         });
-  //         toast('⛔ Парсинг отменён');
-  //         if (typeof window !== 'undefined') {
-  //           window.localStorage.removeItem('ozonParserJobId');
-  //         }
-  //         setJobId(null);
-  //       }
-  //     } catch (err) {
-  //       console.error('Ошибка при запросе статуса задачи:', err);
-  //     }
-  //   }
+        if (status === 'completed') {
+          setLoading(false);
+          setResp({
+            success: true,
+            error: null,
+            s3OutputUrl: s3OutputUrl || null,
+          });
+          toast.success('✅ Парсинг успешно завершён!');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        } else if (status === 'error') {
+          setLoading(false);
+          setResp({
+            success: false,
+            error: error || 'Ошибка парсинга',
+            s3OutputUrl: s3OutputUrl || null,
+          });
+          toast.error('❌ Парсинг завершён с ошибкой');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        } else if (status === 'cancelled') {
+          setLoading(false);
+          setResp({
+            success: false,
+            error: 'Парсинг был отменён',
+            s3OutputUrl: null,
+          });
+          toast('⛔ Парсинг отменён');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        }
+      } catch (err) {
+        console.error('Ошибка при запросе статуса задачи:', err);
+      }
+    }
 
-  //   // первый запрос сразу
-  //   pollOnce();
-  //   // далее poll каждые 10 сек
-  //   const id = setInterval(pollOnce, POLLING_INTERVAL);
+    // первый запрос сразу
+    pollOnce();
+    // далее poll каждые 10 сек
+    const id = setInterval(pollOnce, POLLING_INTERVAL);
 
-  //   return () => {
-  //     cancelled = true;
-  //     clearInterval(id);
-  //   };
-  // }, [jobId]);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [jobId]);
 
   // ==== Отправка формы: создаёт ТОЛЬКО jobId ====
   async function onSubmit(e) {
@@ -205,7 +205,7 @@ export default function HomePage() {
     setLinks(links.filter((l) => l !== linkToRemove));
   }
 
-  // const false = loading || !!jobId;
+  const isBusy = loading || !!jobId;
 
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
@@ -234,9 +234,9 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={clearLinks}
-                disabled={!links.length || false}
+                disabled={!links.length || isBusy}
                 className={`px-3 py-2 text-sm rounded-lg border transition ${
-                  links.length && !false
+                  links.length && !isBusy
                     ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 cursor-pointer'
                     : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
                 }`}
@@ -276,7 +276,7 @@ export default function HomePage() {
                 id="fileInput"
                 type="file"
                 accept=".txt,.xlsx"
-                disabled={false}
+                disabled={isBusy}
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-60"
               />
@@ -298,7 +298,7 @@ export default function HomePage() {
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              disabled={false}
+              disabled={isBusy}
               className="border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="1">1 — все отзывы</option>
@@ -310,14 +310,14 @@ export default function HomePage() {
           <div className="flex justify-center">
             <button
               type="submit"
-              disabled={false}
+              disabled={isBusy}
               className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
-                false
+                isBusy
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
               }`}
             >
-              {false ? 'Парсер работает...' : '🚀 Запустить парсер'}
+              {isBusy ? 'Парсер работает...' : '🚀 Запустить парсер'}
             </button>
           </div>
         </form>
