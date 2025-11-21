@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const POLLING_INTERVAL = 10000;
+const POLLING_INTERVAL = 25000;
 
 export default function HomePage() {
   const [inputLink, setInputLink] = useState('');
