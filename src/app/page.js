@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
+
+const POLLING_INTERVAL = 10000;
 
 export default function HomePage() {
   const [inputLink, setInputLink] = useState('');
@@ -12,11 +14,102 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [resp, setResp] = useState(null);
 
+  const [jobId, setJobId] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null);
+
   const ozonRegex = /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i;
 
+  // ==== Восстанавливаем незавершённую задачу из localStorage ====
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedJobId = window.localStorage.getItem('ozonParserJobId');
+    if (savedJobId) {
+      setJobId(savedJobId);
+      setLoading(true);
+      toast('🔄 Восстанавливаем статус предыдущего парсинга...');
+    }
+  }, []);
+
+  // ==== ПОЛЛИНГ СТАТУСА ПО jobId ====
+  useEffect(() => {
+    if (!jobId) return;
+
+    let cancelled = false;
+
+    async function pollOnce() {
+      try {
+        const res = await axios.get('/api/status', {
+          params: { jobId },
+        });
+
+        const data = res.data;
+        if (cancelled) return;
+
+        if (!data.success) {
+          console.warn('Неуспешный статус задачи:', data);
+          return;
+        }
+
+        setJobStatus(data);
+
+        const { status, s3OutputUrl, error } = data;
+
+        if (status === 'completed') {
+          setLoading(false);
+          setResp({
+            success: true,
+            error: null,
+            s3OutputUrl: s3OutputUrl || null,
+          });
+          toast.success('✅ Парсинг успешно завершён!');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        } else if (status === 'error') {
+          setLoading(false);
+          setResp({
+            success: false,
+            error: error || 'Ошибка парсинга',
+            s3OutputUrl: s3OutputUrl || null,
+          });
+          toast.error('❌ Парсинг завершён с ошибкой');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        } else if (status === 'cancelled') {
+          setLoading(false);
+          setResp({
+            success: false,
+            error: 'Парсинг был отменён',
+            s3OutputUrl: null,
+          });
+          toast('⛔ Парсинг отменён');
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('ozonParserJobId');
+          }
+          setJobId(null);
+        }
+      } catch (err) {
+        console.error('Ошибка при запросе статуса задачи:', err);
+      }
+    }
+
+    // первый запрос сразу
+    pollOnce();
+    // далее poll каждые 10 сек
+    const id = setInterval(pollOnce, POLLING_INTERVAL);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [jobId]);
+
+  // ==== Отправка формы: создаёт ТОЛЬКО jobId ====
   async function onSubmit(e) {
     e.preventDefault();
-    setLoading(true);
     setResp(null);
 
     try {
@@ -25,21 +118,37 @@ export default function HomePage() {
       form.append('linksText', links.join('\n'));
       if (file) form.append('file', file);
 
+      setLoading(true);
+
       const res = await axios.post('/api/parse', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       const data = res.data;
-      setResp(data);
 
-      if (data.success) {
-        toast.success('✅ Парсинг завершён!');
-      } else {
-        toast.error('❌ Парсинг завершён с ошибкой');
+      if (!data.success || !data.jobId) {
+        setLoading(false);
+        setResp({
+          success: false,
+          error: data.error || 'Не удалось создать задачу парсинга',
+          s3OutputUrl: null,
+        });
+        toast.error('❌ Ошибка запуска парсинга');
+        return;
       }
+
+      // успешно получили jobId
+      setJobId(data.jobId);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('ozonParserJobId', data.jobId);
+      }
+      toast.success('🚀 Парсер запущен! Можно даже обновить страницу.');
+
+      // РЕЗУЛЬТАТ появится позже через poll по jobId
     } catch (err) {
       console.error(err);
 
+      setLoading(false);
       setResp({
         success: false,
         error: err.response?.data?.error || 'Ошибка при запросе к серверу',
@@ -47,8 +156,6 @@ export default function HomePage() {
       });
 
       toast.error('❌ Ошибка при запросе к серверу');
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -87,13 +194,18 @@ export default function HomePage() {
 
   function clearFile() {
     setFile(null);
-    document.getElementById('fileInput').value = '';
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('fileInput');
+      if (el) el.value = '';
+    }
     toast('🗑 Файл очищен.');
   }
 
   function removeLink(linkToRemove) {
     setLinks(links.filter((l) => l !== linkToRemove));
   }
+
+  const isBusy = loading || !!jobId;
 
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
@@ -122,9 +234,9 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={clearLinks}
-                disabled={!links.length}
+                disabled={!links.length || isBusy}
                 className={`px-3 py-2 text-sm rounded-lg border transition ${
-                  links.length
+                  links.length && !isBusy
                     ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 cursor-pointer'
                     : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
                 }`}
@@ -164,8 +276,9 @@ export default function HomePage() {
                 id="fileInput"
                 type="file"
                 accept=".txt,.xlsx"
+                disabled={isBusy}
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-60"
               />
               {file && (
                 <button
@@ -185,7 +298,8 @@ export default function HomePage() {
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isBusy}
+              className="border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="1">1 — все отзывы</option>
               <option value="2">2 — только с текстом</option>
@@ -196,21 +310,42 @@ export default function HomePage() {
           <div className="flex justify-center">
             <button
               type="submit"
-              disabled={loading}
+              disabled={isBusy}
               className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
-                loading
+                isBusy
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
               }`}
             >
-              {loading ? 'Запуск...' : '🚀 Запустить парсер'}
+              {isBusy ? 'Парсер работает...' : '🚀 Запустить парсер'}
             </button>
           </div>
         </form>
 
-        {/* ----- РЕЗУЛЬТАТ ----- */}
+        {/* ----- РЕЗУЛЬТАТ + СТАТУС ----- */}
         <section className="mt-8">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
+
+          {jobId && (
+            <div className="mb-3 text-xs text-gray-500">
+              <div>
+                Job ID: <span className="font-mono">{jobId}</span>
+              </div>
+              {jobStatus && (
+                <div className="mt-1">
+                  Статус: <strong>{jobStatus.status}</strong>
+                  {typeof jobStatus.processedUrls === 'number' &&
+                    typeof jobStatus.totalUrls === 'number' &&
+                    jobStatus.totalUrls > 0 && (
+                      <span className="ml-2">
+                        ({jobStatus.processedUrls}/{jobStatus.totalUrls} товаров)
+                      </span>
+                    )}
+                </div>
+              )}
+              {!jobStatus && <div className="mt-1">Запрашиваем статус...</div>}
+            </div>
+          )}
 
           {!resp ? (
             <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
@@ -220,7 +355,6 @@ export default function HomePage() {
             <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap">
               <strong className="block mb-1">Ошибка:</strong>
               {resp.error}
-
               {resp.s3OutputUrl && (
                 <a
                   href={resp.s3OutputUrl}
