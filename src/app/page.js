@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const POLLING_INTERVAL = 25000;
+const POLLING_INTERVAL = 5000;
 
 export default function HomePage() {
   const [inputLink, setInputLink] = useState('');
@@ -13,7 +13,8 @@ export default function HomePage() {
   const [mode, setMode] = useState('1');
   const [loading, setLoading] = useState(false);
   const [resp, setResp] = useState(null);
-
+  const [showStatus, setShowStatus] = useState(true);
+  const [timer, setTimer] = useState(0);
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
 
@@ -29,6 +30,20 @@ export default function HomePage() {
       toast('🔄 Восстанавливаем статус предыдущего парсинга...');
     }
   }, []);
+
+  // СЕКУНДОМЕР
+  useEffect(() => {
+    if (!jobId) {
+      setTimer(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimer(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [jobId]);
 
   // ==== ПОЛЛИНГ СТАТУСА ПО jobId ====
   useEffect(() => {
@@ -61,7 +76,7 @@ export default function HomePage() {
             error: null,
             s3OutputUrl: s3OutputUrl || null,
           });
-          toast.success('✅ Парсинг успешно завершён!');
+          toast.success('Парсинг успешно завершён!');
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('ozonParserJobId');
           }
@@ -73,7 +88,7 @@ export default function HomePage() {
             error: error || 'Ошибка парсинга',
             s3OutputUrl: s3OutputUrl || null,
           });
-          toast.error('❌ Парсинг завершён с ошибкой');
+          toast.error('Парсинг завершён с ошибкой');
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('ozonParserJobId');
           }
@@ -85,7 +100,7 @@ export default function HomePage() {
             error: 'Парсинг был отменён',
             s3OutputUrl: null,
           });
-          toast('⛔ Парсинг отменён');
+          toast('Парсинг отменён');
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('ozonParserJobId');
           }
@@ -133,7 +148,7 @@ export default function HomePage() {
           error: data.error || 'Не удалось создать задачу парсинга',
           s3OutputUrl: null,
         });
-        toast.error('❌ Ошибка запуска парсинга');
+        toast.error('Ошибка запуска парсинга');
         return;
       }
 
@@ -142,7 +157,7 @@ export default function HomePage() {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('ozonParserJobId', data.jobId);
       }
-      toast.success('🚀 Парсер запущен! Можно даже обновить страницу.');
+      toast('🚀 Парсер запущен!');
 
       // РЕЗУЛЬТАТ появится позже через poll по jobId
     } catch (err) {
@@ -155,7 +170,7 @@ export default function HomePage() {
         s3OutputUrl: null,
       });
 
-      toast.error('❌ Ошибка при запросе к серверу');
+      toast.error('Ошибка при запросе к серверу');
     }
   }
 
@@ -327,23 +342,52 @@ export default function HomePage() {
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
 
           {jobId && (
-            <div className="mb-3 text-xs text-gray-500">
-              <div>
-                Job ID: <span className="font-mono">{jobId}</span>
-              </div>
-              {jobStatus && (
-                <div className="mt-1">
-                  Статус: <strong>{jobStatus.status}</strong>
-                  {typeof jobStatus.processedUrls === 'number' &&
-                    typeof jobStatus.totalUrls === 'number' &&
-                    jobStatus.totalUrls > 0 && (
-                      <span className="ml-2">
-                        ({jobStatus.processedUrls}/{jobStatus.totalUrls} товаров)
-                      </span>
-                    )}
+            <div className="mb-3">
+              <button
+                onClick={() => setShowStatus(!showStatus)}
+                className="text-sm text-blue-600 underline mb-2"
+              >
+                {showStatus ? 'Скрыть статус' : 'Показать статус'}
+              </button>
+
+              {showStatus && (
+                <div className="text-xs bg-gray-100 border p-3 rounded">
+                  <div>
+                    Процесс: <b>{jobId.split('_')[0]}</b>
+                  </div>
+
+                  {jobStatus && (
+                    <>
+                      <div>
+                        Статус: <b>{jobStatus.status}</b>
+                      </div>
+
+                      <div>
+                        Товаров завершено: {jobStatus.processedUrls}/{jobStatus.totalUrls}
+                      </div>
+
+                      {jobStatus.currentUrl && (
+                        <div className="mt-1">
+                          В обработке: <span className="break-all">{jobStatus.currentUrl}</span>
+                        </div>
+                      )}
+
+                      {jobStatus.currentPage > 0 && (
+                        <div>Текущая страница: {jobStatus.currentPage}</div>
+                      )}
+
+                      {jobStatus.collectedReviews > 0 && (
+                        <div>Отзывов собрано: {jobStatus.collectedReviews}</div>
+                      )}
+
+                      {/* таймер */}
+                      <div className="mt-1 text-gray-600">
+                        Время работы: {Math.floor((timer - jobStatus.createdAt) / 1000)} сек
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
-              {!jobStatus && <div className="mt-1">Запрашиваем статус...</div>}
             </div>
           )}
 
