@@ -6,21 +6,53 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const POLLING_INTERVAL = 5000;
 
+function formatStatusRu(status) {
+  switch (status) {
+    case 'queued':
+      return 'в очереди';
+    case 'downloading':
+      return 'загрузка файла';
+    case 'parsing':
+      return 'сбор данных';
+    case 'completed':
+      return 'успешно завершено';
+    case 'error':
+      return 'ошибка';
+    case 'cancelled':
+      return 'отменено';
+    default:
+      return status || '—';
+  }
+}
+
+function formatDuration(secondsRaw) {
+  const seconds = Math.max(0, Math.floor(secondsRaw || 0));
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+
+  if (m === 0) return `${s} сек`;
+  return `${m} мин ${s.toString().padStart(2, '0')} сек`;
+}
+
 export default function HomePage() {
   const [inputLink, setInputLink] = useState('');
   const [links, setLinks] = useState([]);
   const [file, setFile] = useState(null);
-  const [mode, setMode] = useState('1');
+  const [mode, setMode] = useState('3');
+
   const [loading, setLoading] = useState(false);
   const [resp, setResp] = useState(null);
+
   const [showStatus, setShowStatus] = useState(true);
-  const [timer, setTimer] = useState(0);
+
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
+  const [nowTs, setNowTs] = useState(Date.now());
+  const [cancelling, setCancelling] = useState(false);
 
   const ozonRegex = /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i;
 
-  // ==== Восстанавливаем незавершённую задачу из localStorage ====
+  // Восстанавливаем незавершённую задачу из localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedJobId = window.localStorage.getItem('ozonParserJobId');
@@ -31,21 +63,14 @@ export default function HomePage() {
     }
   }, []);
 
-  // СЕКУНДОМЕР
+  // Таймер
   useEffect(() => {
-    if (!jobId) {
-      setTimer(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimer(Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
+    if (!jobId) return;
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
   }, [jobId]);
 
-  // ==== ПОЛЛИНГ СТАТУСА ПО jobId ====
+  // Поллинг статуса по jobId
   useEffect(() => {
     if (!jobId) return;
 
@@ -113,7 +138,7 @@ export default function HomePage() {
 
     // первый запрос сразу
     pollOnce();
-    // далее poll каждые 10 сек
+    // далее poll каждые POLLING_INTERVAL
     const id = setInterval(pollOnce, POLLING_INTERVAL);
 
     return () => {
@@ -122,10 +147,16 @@ export default function HomePage() {
     };
   }, [jobId]);
 
-  // ==== Отправка формы: создаёт ТОЛЬКО jobId ====
+  // Отправка формы: создаёт ТОЛЬКО jobId
   async function onSubmit(e) {
     e.preventDefault();
     setResp(null);
+
+    // Защита от повторного запуска, если задача уже есть
+    if (jobId) {
+      toast('Уже есть запущенный процесс. Сначала остановите его.');
+      return;
+    }
 
     try {
       const form = new FormData();
@@ -158,8 +189,6 @@ export default function HomePage() {
         window.localStorage.setItem('ozonParserJobId', data.jobId);
       }
       toast('🚀 Парсер запущен!');
-
-      // РЕЗУЛЬТАТ появится позже через poll по jobId
     } catch (err) {
       console.error(err);
 
@@ -171,6 +200,22 @@ export default function HomePage() {
       });
 
       toast.error('Ошибка при запросе к серверу');
+    }
+  }
+
+  // Отмена парсинга (текущего jobId)
+  async function handleCancel() {
+    if (!jobId) return;
+    try {
+      setCancelling(true);
+      await axios.post('/api/status', { jobId, action: 'cancel' });
+      toast('⏹ Запросили остановку парсинга...');
+      // дальше статус сменится через poll
+    } catch (err) {
+      console.error('Ошибка отмены:', err);
+      toast.error('Не удалось отменить парсинг');
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -220,7 +265,42 @@ export default function HomePage() {
     setLinks(links.filter((l) => l !== linkToRemove));
   }
 
-  const isBusy = loading || !!jobId;
+  const isBusy = !!jobId || loading;
+
+  const isActiveStatus =
+    jobStatus && ['queued', 'downloading', 'parsing'].includes(jobStatus.status);
+
+  let elapsedSeconds = 0;
+  if (jobStatus) {
+    if (isActiveStatus && jobId) {
+      elapsedSeconds = (nowTs - jobStatus.createdAt) / 1000;
+    } else {
+      // завершённая / отменённая / с ошибкой задача
+      elapsedSeconds = (jobStatus.updatedAt - jobStatus.createdAt) / 1000;
+    }
+  }
+
+  const timeLabel = isActiveStatus ? 'Время работы:' : 'Завершено за:';
+
+  const totalReviewsCount = jobStatus?.totalReviewsCount || 0;
+  const collectedReviews = jobStatus?.collectedReviews || 0;
+
+  const progressReviewsText =
+    totalReviewsCount > 0
+      ? `${collectedReviews} / ${totalReviewsCount}`
+      : collectedReviews > 0
+      ? `${collectedReviews}`
+      : '—';
+
+  const processedUrls = jobStatus?.processedUrls ?? null;
+  const totalUrls = jobStatus?.totalUrls ?? null;
+  const urlsProgressText =
+    typeof processedUrls === 'number' && typeof totalUrls === 'number' && totalUrls > 0
+      ? `${processedUrls}/${totalUrls}`
+      : '—';
+
+  const shortProcessId = jobStatus?.id || jobId || null;
+  const shortProcessLabel = shortProcessId ? shortProcessId.split('_')[0] : '—';
 
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
@@ -323,80 +403,96 @@ export default function HomePage() {
           </div>
 
           <div className="flex justify-center">
-            <button
-              type="submit"
-              disabled={isBusy}
-              className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
-                isBusy
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-              }`}
-            >
-              {isBusy ? 'Парсер работает...' : '🚀 Запустить парсер'}
-            </button>
+            {jobId ? (
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={cancelling}
+                className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
+                  cancelling
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-700 cursor-pointer'
+                }`}
+              >
+                {cancelling ? 'Отмена...' : '⏹ Остановить парсер'}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isBusy}
+                className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
+                  isBusy
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                }`}
+              >
+                {isBusy ? 'Парсер работает...' : '🚀 Запустить парсер'}
+              </button>
+            )}
           </div>
         </form>
 
-        {/* ----- РЕЗУЛЬТАТ + СТАТУС ----- */}
+        {/* ----- СТАТУС ПРОЦЕССА ----- */}
         <section className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-gray-700">Информация о процессе</h3>
+            <button
+              type="button"
+              onClick={() => setShowStatus(!showStatus)}
+              className="text-xs text-blue-600 underline"
+            >
+              {showStatus ? 'Скрыть' : 'Показать'}
+            </button>
+          </div>
 
-          {jobId && (
-            <div className="mb-3">
-              <button
-                onClick={() => setShowStatus(!showStatus)}
-                className="text-sm text-blue-600 underline mb-2"
-              >
-                {showStatus ? 'Скрыть статус' : 'Показать статус'}
-              </button>
+          {showStatus && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700 space-y-1">
+              <div>
+                Процесс: <b>{shortProcessLabel}</b>
+              </div>
 
-              {showStatus && (
-                <div className="text-xs bg-gray-100 border p-3 rounded">
-                  <div>
-                    Процесс: <b>{jobId.split('_')[0]}</b>
-                  </div>
+              <div>
+                Статус:{' '}
+                <b>{jobStatus ? formatStatusRu(jobStatus.status) : 'нет активного процесса'}</b>
+              </div>
 
-                  {jobStatus && (
-                    <>
-                      <div>
-                        Статус: <b>{jobStatus.status}</b>
-                      </div>
+              <div>Товаров завершено: {urlsProgressText}</div>
 
-                      <div>
-                        Товаров завершено: {jobStatus.processedUrls}/{jobStatus.totalUrls}
-                      </div>
+              <div>
+                В обработке:{' '}
+                {jobStatus?.currentUrl ? (
+                  <span className="break-all text-gray-800">{jobStatus.currentUrl}</span>
+                ) : (
+                  '—'
+                )}
+              </div>
 
-                      {jobStatus.currentUrl && (
-                        <div className="mt-1">
-                          В обработке: <span className="break-all">{jobStatus.currentUrl}</span>
-                        </div>
-                      )}
+              <div>
+                Текущая страница:{' '}
+                {jobStatus?.currentPage && jobStatus.currentPage > 0 ? jobStatus.currentPage : '—'}
+              </div>
 
-                      {jobStatus.currentPage > 0 && (
-                        <div>Текущая страница: {jobStatus.currentPage}</div>
-                      )}
+              <div>Отзывов собрано: {progressReviewsText}</div>
 
-                      {jobStatus.collectedReviews > 0 && (
-                        <div>Отзывов собрано: {jobStatus.collectedReviews}</div>
-                      )}
-
-                      {/* таймер */}
-                      <div className="mt-1 text-gray-600">
-                        Время работы: {Math.floor((timer - jobStatus.createdAt) / 1000)} сек
-                      </div>
-                    </>
-                  )}
+              {jobStatus && (
+                <div className="mt-1 text-gray-600">
+                  {timeLabel} <b>{formatDuration(elapsedSeconds)}</b>
                 </div>
               )}
             </div>
           )}
+        </section>
+
+        {/* ----- РЕЗУЛЬТАТ ----- */}
+        <section className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
 
           {!resp ? (
             <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
               — Результаты появятся здесь —
             </div>
           ) : resp.error ? (
-            <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap">
+            <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap text-sm">
               <strong className="block mb-1">Ошибка:</strong>
               {resp.error}
               {resp.s3OutputUrl && (
