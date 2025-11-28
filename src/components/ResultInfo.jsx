@@ -1,0 +1,61 @@
+export default function ResultInfo({ resp }) {
+  return (
+    <section className="mt-6">
+      <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
+
+      {!resp ? (
+        <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
+          — Результаты появятся здесь —
+        </div>
+      ) : resp.cancelled ? (
+        /* ОТМЕНА */
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm text-center">
+          <p className="mb-2 font-medium">⚠ Парсинг отменён пользователем</p>
+          {resp.s3OutputUrl && (
+            <a
+              href={resp.s3OutputUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+            >
+              Скачать Excel-файл (частичные данные)
+            </a>
+          )}
+        </div>
+      ) : resp.error ? (
+        /* ОШИБКА */
+        <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap text-sm">
+          <strong className="block mb-1">Ошибка:</strong>
+          {resp.error}
+          {resp.s3OutputUrl && (
+            <a
+              href={resp.s3OutputUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-3 text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+            >
+              Скачать Excel-файл (с ошибкой)
+            </a>
+          )}
+        </div>
+      ) : resp.success && resp.s3OutputUrl ? (
+        /* УСПЕХ */
+        <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm text-center">
+          <p className="mb-2 font-medium">✅ Парсинг успешно завершён!</p>
+          <a
+            href={resp.s3OutputUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+          >
+            Скачать Excel-файл
+          </a>
+        </div>
+      ) : (
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm">
+          Ответ получен, но ссылка не найдена.
+        </div>
+      )}
+    </section>
+  );
+}
