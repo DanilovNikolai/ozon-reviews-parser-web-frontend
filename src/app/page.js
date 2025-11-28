@@ -45,7 +45,7 @@ export default function HomePage() {
         </form>
 
         {/*     ИНФОРМАЦИЯ О ПРОЦЕССЕ */}
-        <ProcessInfo jobStatus={jobStatus} jobTimer={jobTimer} />
+        <ProcessInfo jobId={jobId} jobStatus={jobStatus} jobTimer={jobTimer} />
 
         {/*        РЕЗУЛЬТАТ          */}
         <ResultInfo resp={resp} />

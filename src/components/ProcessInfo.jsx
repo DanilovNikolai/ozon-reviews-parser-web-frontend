@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { formatStatusRu, formatDuration, statusColorMap } from '../utils/format';
 
-export default function ProcessInfo({ jobStatus, jobTimer }) {
+export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
   const [showStatus, setShowStatus] = useState(true);
 
   // ВЫЧИСЛЕНИЕ ПРОГРЕССА
