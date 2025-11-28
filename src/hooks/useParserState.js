@@ -87,8 +87,6 @@ export function useParserState() {
 
   // ЗАПУСК ПАРСИНГА
   async function startParsing({ mode, links, file }) {
-    setResp(null);
-
     if (jobId) {
       toast('Процесс уже запущен. Сначала остановите его.');
       return;
