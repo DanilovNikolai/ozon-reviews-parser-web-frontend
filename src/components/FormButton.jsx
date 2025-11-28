@@ -1,4 +1,4 @@
-export default function FormButton({ jobId, jobCancelling, cancelParsing }) {
+export default function FormButton({ jobId, jobCancelling, cancelParsing, loading }) {
   return (
     <div className="flex justify-center">
       {jobId ? (
