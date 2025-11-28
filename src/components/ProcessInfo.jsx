@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { formatStatusRu, formatDuration, statusColorMap } from '../utils/format';
 
 export default function ProcessInfo({ jobStatus, jobTimer }) {
