@@ -86,11 +86,18 @@ export function useParserState() {
   }
 
   // ЗАПУСК ПАРСИНГА
-  async function startParsing({ mode, links, file }) {
+  async function startParsing(mode, links, file) {
+    if (!links.length && !file) {
+      toast('Добавьте хотя бы одну ссылку или файл');
+      return;
+    }
+
     if (jobId) {
       toast('Процесс уже запущен. Сначала остановите его.');
       return;
     }
+
+    setResp(null);
 
     try {
       const form = new FormData();
