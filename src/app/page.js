@@ -41,6 +41,7 @@ export default function HomePage() {
             jobCancelling={jobCancelling}
             cancelParsing={cancelParsing}
             loading={loading}
+            jobStatus={jobStatus}
           />
         </form>
 

@@ -1,6 +1,9 @@
-export default function FormButton({ jobId, jobCancelling, cancelParsing, loading }) {
+export default function FormButton({ jobId, jobCancelling, cancelParsing, loading, jobStatus }) {
+  const isQueued = jobStatus?.status === 'queued';
+
   return (
     <div className="flex justify-center">
+      {/* === ЕСЛИ УЖЕ ЕСТЬ ЗАДАЧА === */}
       {jobId ? (
         <button
           type="button"
@@ -12,9 +15,10 @@ export default function FormButton({ jobId, jobCancelling, cancelParsing, loadin
               : 'bg-red-600 hover:bg-red-700 cursor-pointer'
           }`}
         >
-          {jobCancelling ? 'Отмена...' : '⏹ Остановить парсер'}
+          {jobCancelling ? 'Отмена...' : isQueued ? '⏹ Отменить ожидание' : '⏹ Остановить парсер'}
         </button>
       ) : (
+        /* === СТАРТ ПАРСЕРА === */
         <button
           type="submit"
           disabled={loading}
