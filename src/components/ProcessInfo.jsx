@@ -7,17 +7,32 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
   if (!jobStatus) return null;
 
   const isQueued = jobStatus.status === 'queued';
-  const isActive = jobStatus && ['downloading', 'parsing'].includes(jobStatus.status);
+  const isActive = ['downloading', 'parsing'].includes(jobStatus.status);
 
-  // Время (для queued считаем как "время ожидания")
+  // ===== ВРЕМЯ =====
   let elapsedSeconds = 0;
-  const start = jobStatus.createdAt;
-  const end = isActive ? jobTimer : jobStatus.updatedAt;
-  elapsedSeconds = (end - start) / 1000;
+
+  if (isQueued) {
+    // Время ожидания: от createdAt до "сейчас"
+    const start = jobStatus.createdAt;
+    const end = jobTimer;
+    elapsedSeconds = (end - start) / 1000;
+  } else if (isActive) {
+    // Время работы: от startedAt (или createdAt) до "сейчас"
+    const start = jobStatus.startedAt || jobStatus.createdAt;
+    const end = jobTimer;
+    elapsedSeconds = (end - start) / 1000;
+  } else {
+    // Завершено: от startedAt (или createdAt) до updatedAt
+    const start = jobStatus.startedAt || jobStatus.createdAt;
+    const end = jobStatus.updatedAt;
+    elapsedSeconds = (end - start) / 1000;
+  }
 
   const timeLabel = isQueued ? 'Время ожидания:' : isActive ? 'Время работы:' : 'Завершено за:';
 
-  const queueText = isQueued ? `Перед вами: ${jobStatus.queuePosition} задач` : null;
+  // ===== ОЧЕРЕДЬ =====
+  const queueText = isQueued ? `Перед вами: ${jobStatus.humanQueuePosition} задач` : null;
 
   const totalReviewsCount = jobStatus?.totalReviewsCount || 0;
   const collectedReviews = jobStatus?.collectedReviews || 0;
@@ -58,16 +73,14 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
             Процесс id: <b>{shortProcessLabel}</b>
           </div>
 
-          {/* === ОТОБРАЖЕНИЕ СТАТУСА === */}
-          {jobStatus && (
-            <div>
-              Статус:{' '}
-              <b className={statusColorMap[jobStatus.status]}>{formatStatusRu(jobStatus.status)}</b>
-              {isQueued && <span className="ml-2 text-blue-600 font-semibold">({queueText})</span>}
-            </div>
-          )}
+          {/* Статус */}
+          <div>
+            Статус:{' '}
+            <b className={statusColorMap[jobStatus.status]}>{formatStatusRu(jobStatus.status)}</b>
+            {isQueued && <span className="ml-2 text-blue-600 font-semibold">({queueText})</span>}
+          </div>
 
-          {/* === Остальная инфа (только если НЕ queued) === */}
+          {/* Доп. инфа — только если не queued */}
           {!isQueued && (
             <>
               <div>Товаров завершено: {urlsProgressText}</div>
@@ -89,7 +102,7 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
             </>
           )}
 
-          {/* === ВРЕМЯ === */}
+          {/* Время */}
           <div className="mt-1 text-gray-600">
             {timeLabel} <b>{formatDuration(elapsedSeconds)}</b>
           </div>
