@@ -1,27 +1,31 @@
-export default function FormButton({ jobId, jobCancelling, cancelParsing, loading, jobStatus }) {
-  const isQueued = jobStatus?.status === 'queued';
+export default function FormButton({ jobId, cancelParsing, loading, jobStatus }) {
+  const status = jobStatus?.status;
+
+  const isQueued = status === 'queued';
+  const isActive = status === 'downloading' || status === 'parsing' || status === 'cancelling';
+
+  const canStartNew =
+    !jobId || status === 'completed' || status === 'cancelled' || status === 'error';
 
   return (
     <div className="flex justify-center">
-      {/* === ЕСЛИ УЖЕ ЕСТЬ ЗАДАЧА === */}
-      {jobId ? (
+      {isActive || isQueued ? (
         <button
           type="button"
           onClick={cancelParsing}
-          disabled={jobCancelling}
+          disabled={status === 'cancelling'}
           className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
-            jobCancelling
+            status === 'cancelling'
               ? 'bg-red-300 cursor-not-allowed'
               : 'bg-red-600 hover:bg-red-700 cursor-pointer'
           }`}
         >
-          {jobCancelling ? 'Отмена...' : isQueued ? '⏹ Отменить ожидание' : '⏹ Остановить парсер'}
+          {status === 'cancelling' ? 'Отмена...' : '⏹ Остановить парсер'}
         </button>
       ) : (
-        /* === СТАРТ ПАРСЕРА === */
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !canStartNew}
           className={`px-6 py-3 text-white rounded-lg font-semibold transition-colors duration-200 ${
             loading
               ? 'bg-gray-400 cursor-not-allowed'
