@@ -25,19 +25,9 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
     elapsedSeconds = (jobStatus.updatedAt - start) / 1000;
   }
 
-  // ТЕКСТ ДЛЯ ВРЕМЕНИ
-  const timeLabel = isQueued
-    ? 'Время ожидания:'
-    : isActive
-    ? status === 'cancelling'
-      ? 'Завершение процесса...'
-      : 'Время работы:'
-    : 'Завершено за:';
-
+  const timeLabel = isActive ? 'Время работы:' : 'Завершено за:';
   const queueText = isQueued ? `Перед вами: ${jobStatus.humanQueuePosition} задач` : null;
-
   const shortProcessLabel = jobStatus.id ? jobStatus.id.split('_')[0] : jobId?.split('_')[0] || '—';
-
   const totalReviewsCount = jobStatus?.totalReviewsCount || 0;
   const collectedReviews = jobStatus?.collectedReviews || 0;
 
