@@ -32,7 +32,7 @@ export default function FormButton({ jobId, cancelParsing, loading, jobStatus })
               : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
           }`}
         >
-          {loading ? 'Парсер работает...' : '🚀 Запустить парсер'}
+          {loading ? 'Загрузка...' : '🚀 Запустить парсер'}
         </button>
       )}
     </div>
