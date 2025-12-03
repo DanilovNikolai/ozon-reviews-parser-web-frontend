@@ -25,8 +25,11 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
     elapsedSeconds = (jobStatus.updatedAt - start) / 1000;
   }
 
-  const timeLabel = isActive ? 'Время работы:' : 'Завершено за:';
-  const queueText = isQueued ? `Перед вами: ${jobStatus.humanQueuePosition} задач` : null;
+  let timeLabel = 'Завершено за:';
+  if (isQueued) timeLabel = 'Время ожидания:';
+  else if (isActive) timeLabel = 'Время работы:';
+
+  const queueText = isQueued ? `Перед вами задач: ${jobStatus.humanQueuePosition}` : null;
   const shortProcessLabel = jobStatus.id ? jobStatus.id.split('_')[0] : jobId?.split('_')[0] || '—';
   const totalReviewsCount = jobStatus?.totalReviewsCount || 0;
   const collectedReviews = jobStatus?.collectedReviews || 0;
