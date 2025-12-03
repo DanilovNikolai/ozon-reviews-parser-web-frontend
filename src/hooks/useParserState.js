@@ -54,7 +54,7 @@ export function useParserState() {
         } else if (status === 'error') {
           finishProcess({ success: false, error, s3OutputUrl });
         } else if (status === 'cancelled') {
-          finishProcess({ cancelled: true, s3OutputUrl: null });
+          finishProcess({ cancelled: true, s3OutputUrl });
         }
       } catch (err) {
         console.error('Ошибка статуса:', err);
