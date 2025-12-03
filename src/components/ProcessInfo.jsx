@@ -25,6 +25,7 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
     elapsedSeconds = (jobStatus.updatedAt - start) / 1000;
   }
 
+  // ТЕКСТ ДЛЯ ВРЕМЕНИ
   const timeLabel = isQueued
     ? 'Время ожидания:'
     : isActive
@@ -70,14 +71,16 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
             Процесс id: <b>{shortProcessLabel}</b>
           </div>
 
+          {/* СТАТУС */}
           <div>
-            Статус: <b className={statusColorMap[status]}>{formatStatusRu(status)}</b>
+            Статус:{' '}
+            <b className={statusColorMap[status]}>
+              {status === 'cancelling' ? 'Завершение процесса...' : formatStatusRu(status)}
+            </b>
             {isQueued && <span className="ml-2 text-blue-600 font-semibold">({queueText})</span>}
-            {status === 'cancelling' && (
-              <span className="ml-2 text-red-500 font-semibold">Завершение задачи...</span>
-            )}
           </div>
 
+          {/* Дополнительная инфа если НЕ queued */}
           {!isQueued && (
             <>
               <div>Товаров завершено: {urlsProgressText}</div>
@@ -97,6 +100,7 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
             </>
           )}
 
+          {/* ВРЕМЯ */}
           <div className="mt-1 text-gray-600">
             {timeLabel} <b>{formatDuration(elapsedSeconds)}</b>
           </div>

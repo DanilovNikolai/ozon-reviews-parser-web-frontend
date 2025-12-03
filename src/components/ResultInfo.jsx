@@ -18,7 +18,7 @@ export default function ResultInfo({ resp }) {
               rel="noopener noreferrer"
               className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline break-all"
             >
-              Скачать Excel-файл (частичные данные)
+              Скачать Excel-файл (неполный)
             </a>
           )}
         </div>
