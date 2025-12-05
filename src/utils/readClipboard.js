@@ -1,4 +1,4 @@
-export async function readClipboard() {
+export async function readClipboard({ setLinks, inputRef }) {
   try {
     const text = await navigator.clipboard.readText();
     if (!text) return;
@@ -7,8 +7,8 @@ export async function readClipboard() {
       setLinks([text.trim()]);
     }
 
-    if (inputRef.current) inputRef.current.focus();
-  } catch (e) {
-    // в некоторых браузерах запрещено — игнорируем
-  }
+    if (inputRef?.current) {
+      inputRef.current.focus();
+    }
+  } catch (e) {}
 }
