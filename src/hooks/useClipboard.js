@@ -9,11 +9,20 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
   function acceptClipboardLink() {
     setLinks((prev) => (prev.includes(clipboardUrl) ? prev : [...prev, clipboardUrl]));
     setClipboardUrl(null);
+
+    // Возвращаем фокус
+    if (inputRef?.current) {
+      setTimeout(() => inputRef.current.focus(), 50);
+    }
   }
 
   // ----- Отклонение ссылки -----
   function declineClipboardLink() {
     setClipboardUrl(null);
+
+    if (inputRef?.current) {
+      setTimeout(() => inputRef.current.focus(), 50);
+    }
   }
 
   // ----- Основной обработчик -----
@@ -27,10 +36,20 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
         if (!text) return;
 
         const trimmed = text.trim();
+
+        // --- Проверка: ссылка Ozon ---
         if (!trimmed.startsWith('https://www.ozon.ru/product/')) return;
 
-        if (links.includes(trimmed)) return;
+        // --- Не показывать popup, если ссылка уже есть ---
+        if (links.includes(trimmed)) {
+          // Если popup открыт, но ссылка уже есть — закрываем
+          if (clipboardUrl === trimmed) {
+            setClipboardUrl(null);
+          }
+          return;
+        }
 
+        // --- Если ссылка новая — показываем popup ---
         setClipboardUrl(trimmed);
       } catch {}
     }
@@ -59,7 +78,7 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
       document.removeEventListener('visibilitychange', handleVisible);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [links, jobStatus, inputRef]);
+  }, [links, jobStatus, inputRef, clipboardUrl]);
 
   return {
     clipboardUrl,
