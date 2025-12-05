@@ -1,14 +1,14 @@
-export async function readClipboard({ setLinks, inputRef }) {
+export async function readClipboard() {
   try {
+    if (!navigator.clipboard?.readText) return null;
+
     const text = await navigator.clipboard.readText();
-    if (!text) return;
+    if (!text) return null;
 
     if (text.startsWith('https://www.ozon.ru/product/')) {
-      setLinks([text.trim()]);
-    }
-
-    if (inputRef?.current) {
-      inputRef.current.focus();
+      return text.trim();
     }
   } catch (e) {}
+
+  return null;
 }
