@@ -33,9 +33,22 @@ export default function HomePage() {
     }
   }, [jobStatus]);
 
-  // === Автоматическая подстановка ссылки из буфера ===
+  // === Автоматическая подстановка при загрузке страницы ===
   useEffect(() => {
-    readClipboard();
+    readClipboard({ setLinks, inputRef });
+  }, []);
+
+  // === Автофокус и чтение буфера при переключении вкладки ===
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        if (inputRef.current) inputRef.current.focus();
+        readClipboard({ setLinks, inputRef });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
   }, []);
 
   return (
@@ -48,12 +61,7 @@ export default function HomePage() {
         </h1>
 
         <form onSubmit={handleSubmitForm} className="space-y-6">
-          <LinksInput
-            links={links}
-            setLinks={setLinks}
-            loading={loading}
-            inputRef={inputRef}
-          />
+          <LinksInput links={links} setLinks={setLinks} loading={loading} inputRef={inputRef} />
 
           <FileInput file={file} setFile={setFile} loading={loading} />
 
