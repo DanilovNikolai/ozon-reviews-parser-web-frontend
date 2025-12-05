@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParserState } from '@/hooks/useParserState';
 import { Toaster } from 'react-hot-toast';
 import FileInput from '@/components/FileInput';
@@ -9,11 +9,15 @@ import ModeSelect from '@/components/ModeSelect';
 import FormButton from '@/components/FormButton';
 import ProcessInfo from '@/components/ProcessInfo';
 import ResultInfo from '@/components/ResultInfo';
+import { readClipboard } from '../utils/readClipboard';
 
 export default function HomePage() {
   const [links, setLinks] = useState([]);
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState('3');
+
+  const inputRef = useRef(null);
+
   const { loading, resp, jobId, jobStatus, jobTimer, jobCancelling, startParsing, cancelParsing } =
     useParserState();
 
@@ -21,6 +25,18 @@ export default function HomePage() {
     e.preventDefault();
     startParsing(mode, links, file);
   };
+
+  // === Автофокус при загрузке ===
+  useEffect(() => {
+    if (!jobStatus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [jobStatus]);
+
+  // === Автоматическая подстановка ссылки из буфера ===
+  useEffect(() => {
+    readClipboard();
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
@@ -31,11 +47,18 @@ export default function HomePage() {
           🧩 Ozon Reviews Parser
         </h1>
 
-        {/*         ФОРМА            */}
         <form onSubmit={handleSubmitForm} className="space-y-6">
-          <LinksInput links={links} setLinks={setLinks} loading={loading} />
+          <LinksInput
+            links={links}
+            setLinks={setLinks}
+            loading={loading}
+            inputRef={inputRef}
+          />
+
           <FileInput file={file} setFile={setFile} loading={loading} />
+
           <ModeSelect mode={mode} setMode={setMode} loading={loading} />
+
           <FormButton
             jobId={jobId}
             jobCancelling={jobCancelling}
@@ -45,10 +68,8 @@ export default function HomePage() {
           />
         </form>
 
-        {/*     ИНФОРМАЦИЯ О ПРОЦЕССЕ */}
         <ProcessInfo jobId={jobId} jobStatus={jobStatus} jobTimer={jobTimer} />
 
-        {/*        РЕЗУЛЬТАТ          */}
         <ResultInfo resp={resp} />
       </div>
     </main>
