@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useParserState } from '@/hooks/useParserState';
+import { useLinksStorage } from '@/hooks/useLinksStorage';
 import { useClipboard } from '@/hooks/useClipboard';
 import { Toaster } from 'react-hot-toast';
 
@@ -19,9 +20,14 @@ export default function HomePage() {
   const [mode, setMode] = useState('3');
   const inputRef = useRef(null);
 
+  // --- Хук управления состояниями процесса ---
   const { loading, resp, jobId, jobStatus, jobTimer, jobCancelling, startParsing, cancelParsing } =
     useParserState();
 
+  // --- Хук локального хранения ссылок ---
+  useLinksStorage(links, setLinks, jobStatus);
+
+  // --- Хук работы с буффером ссылок ---
   const { clipboardUrl, acceptClipboardLink, declineClipboardLink } = useClipboard(
     links,
     setLinks,
