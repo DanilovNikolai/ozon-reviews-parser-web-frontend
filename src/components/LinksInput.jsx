@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 const ozonRegex = /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i;
 
-export default function LinksInput({ links, setLinks, loading }) {
+export default function LinksInput({ links, setLinks, loading, inputRef }) {
   const [inputLink, setInputLink] = useState('');
 
   function handleAddLink() {
@@ -48,6 +48,7 @@ export default function LinksInput({ links, setLinks, loading }) {
       <label className="block text-sm font-medium text-gray-700 mb-1">Добавить ссылку</label>
       <div className="flex gap-2">
         <input
+          ref={inputRef}
           value={inputLink}
           onChange={(e) => setInputLink(e.target.value)}
           onKeyDown={handleKeyDown}
