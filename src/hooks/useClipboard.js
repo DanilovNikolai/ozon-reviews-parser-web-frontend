@@ -1,23 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export function useClipboard(links, setLinks, jobStatus, inputRef) {
   const [clipboardUrl, setClipboardUrl] = useState(null);
 
-  // ----- Добавление ссылки -----
+  // Храним предыдущий текст буфера
+  const lastClipboardText = useRef('');
+  // Храним ссылку, для которой popup уже показывался после последнего копирования
+  const lastPopupShownFor = useRef('');
+
   function acceptClipboardLink() {
     setLinks((prev) => (prev.includes(clipboardUrl) ? prev : [...prev, clipboardUrl]));
+    lastPopupShownFor.current = clipboardUrl;
     setClipboardUrl(null);
 
-    // Возвращаем фокус
     if (inputRef?.current) {
       setTimeout(() => inputRef.current.focus(), 50);
     }
   }
 
-  // ----- Отклонение ссылки -----
   function declineClipboardLink() {
+    lastPopupShownFor.current = clipboardUrl;
     setClipboardUrl(null);
 
     if (inputRef?.current) {
@@ -25,7 +29,6 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
     }
   }
 
-  // ----- Основной обработчик -----
   useEffect(() => {
     async function checkClipboard() {
       if (typeof navigator === 'undefined') return;
@@ -36,28 +39,28 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
         if (!text) return;
 
         const trimmed = text.trim();
-
-        // --- Проверка: ссылка Ozon ---
         if (!trimmed.startsWith('https://www.ozon.ru/product/')) return;
 
-        // --- Не показывать popup, если ссылка уже есть ---
-        if (links.includes(trimmed)) {
-          // Если popup открыт, но ссылка уже есть — закрываем
-          if (clipboardUrl === trimmed) {
-            setClipboardUrl(null);
-          }
+        // 1. Это новая попытка копирования?
+        if (trimmed === lastClipboardText.current) {
           return;
         }
 
-        // --- Если ссылка новая — показываем popup ---
+        // Обновили значение — пользователь что-то скопировал заново
+        lastClipboardText.current = trimmed;
+
+        // 2. Если ссылка уже в списке — popup не нужен
+        if (links.includes(trimmed)) return;
+
+        // 3. Если popup уже показывался для этой ссылки после последнего копирования
+        if (lastPopupShownFor.current === trimmed) return;
+
+        // 4. Показываем popup
         setClipboardUrl(trimmed);
       } catch {}
     }
 
-    // При загрузке страницы
-    checkClipboard();
-
-    // При возвращении на вкладку
+    // Проверяем буфер при фокусе/возврате на вкладку
     function handleVisible() {
       if (document.visibilityState === 'visible') {
         if (!jobStatus && inputRef.current) inputRef.current.focus();
@@ -65,20 +68,19 @@ export function useClipboard(links, setLinks, jobStatus, inputRef) {
       }
     }
 
-    // При фокусе окна
     function handleFocus() {
       if (!jobStatus && inputRef.current) inputRef.current.focus();
       checkClipboard();
     }
 
-    document.addEventListener('visibilitychange', handleVisible);
     window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisible);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisible);
       window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisible);
     };
-  }, [links, jobStatus, inputRef, clipboardUrl]);
+  }, [links, jobStatus, inputRef]);
 
   return {
     clipboardUrl,
