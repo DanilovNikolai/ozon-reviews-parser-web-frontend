@@ -18,7 +18,7 @@ export function useLinksStorage(links, setLinks, jobStatus) {
         }
       }
     } catch {}
-  }, []);
+  }, [setLinks]);
 
   // === Автосохранение ссылок при каждом изменении ===
   useEffect(() => {
