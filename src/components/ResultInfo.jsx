@@ -13,9 +13,9 @@ export default function ResultInfo({ resp }) {
         <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm text-center">
           <p className="mb-2 font-medium">⚠ Парсинг отменён пользователем</p>
 
-          {resp.updatedAt && (
+          {resp.finishedAt && (
             <p className="text-xs text-gray-500 mb-2">
-              Завершено: {new Date(resp.updatedAt).toLocaleString()}
+              Завершено: {new Date(resp.finishedAt).toLocaleString()}
             </p>
           )}
 
@@ -36,9 +36,9 @@ export default function ResultInfo({ resp }) {
           <strong className="block mb-1">Ошибка:</strong>
           {resp.error}
 
-          {resp.updatedAt && (
+          {resp.finishedAt && (
             <p className="text-xs text-gray-500 mt-2">
-              Завершено: {new Date(resp.updatedAt).toLocaleString()}
+              Завершено: {new Date(resp.finishedAt).toLocaleString()}
             </p>
           )}
 
@@ -58,9 +58,9 @@ export default function ResultInfo({ resp }) {
         <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-lg text-sm text-center">
           <p className="mb-2 font-medium">✅ Парсинг успешно завершён!</p>
 
-          {resp.updatedAt && (
+          {resp.finishedAt && (
             <p className="text-xs text-gray-500 mb-2">
-              Завершено: {new Date(resp.updatedAt).toLocaleString()}
+              Завершено: {new Date(resp.finishedAt).toLocaleString()}
             </p>
           )}
 
