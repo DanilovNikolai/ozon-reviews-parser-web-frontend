@@ -57,11 +57,16 @@ export function useParserState() {
         const { status, s3OutputUrl, error } = data;
 
         if (status === 'completed') {
-          finishProcess({ success: true, s3OutputUrl, finishedAt: jobStatus?.updatedAt });
+          finishProcess({ success: true, s3OutputUrl, finishedAt: data.updatedAt });
         } else if (status === 'error') {
-          finishProcess({ success: false, error, s3OutputUrl, finishedAt: jobStatus?.updatedAt });
+          finishProcess({
+            success: false,
+            error,
+            s3OutputUrl,
+            finishedAt: data.updatedAt,
+          });
         } else if (status === 'cancelled') {
-          finishProcess({ cancelled: true, s3OutputUrl, finishedAt: jobStatus?.updatedAt });
+          finishProcess({ cancelled: true, s3OutputUrl, finishedAt: data.updatedAt });
         }
       } catch (err) {
         console.error('Ошибка статуса:', err);
@@ -75,7 +80,7 @@ export function useParserState() {
       stop = true;
       clearInterval(id);
     };
-  }, [jobId, jobStatus]);
+  }, [jobId]);
 
   // === ЗАВЕРШЕНИЕ ПРОЦЕССА ===
   function finishProcess(info) {
