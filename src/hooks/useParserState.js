@@ -12,9 +12,16 @@ export function useParserState() {
   const [jobTimer, setJobTimer] = useState(Date.now());
   const [jobCancelling, setJobCancelling] = useState(false);
 
-  // ВОССТАНОВЛЕНИЕ ЗАДАЧИ
+  // === ВОССТАНОВЛЕНИЕ РЕЗУЛЬТАТА ===
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    const savedResult = window.localStorage.getItem('ozonParserLastResult');
+    if (savedResult) {
+      try {
+        setResp(JSON.parse(savedResult));
+      } catch {}
+    }
 
     const savedJobId = window.localStorage.getItem('ozonParserJobId');
     if (savedJobId) {
@@ -24,14 +31,14 @@ export function useParserState() {
     }
   }, []);
 
-  // ТАЙМЕР
+  // === ТАЙМЕР ===
   useEffect(() => {
     if (!jobId) return;
     const id = setInterval(() => setJobTimer(Date.now()), 1000);
     return () => clearInterval(id);
   }, [jobId]);
 
-  // ПОЛЛИНГ СТАТУСА
+  // === ПОЛЛИНГ СТАТУСА ===
   useEffect(() => {
     if (!jobId) return;
 
@@ -70,22 +77,26 @@ export function useParserState() {
     };
   }, [jobId]);
 
-  // ЗАВЕРШЕНИЕ ПРОЦЕССА
+  // === ЗАВЕРШЕНИЕ ПРОЦЕССА ===
   function finishProcess(info) {
     setLoading(false);
     setResp(info);
 
+    // === toast уведомления ===
     if (info.cancelled) toast('⏹ Парсинг отменён');
     else if (info.success) toast.success('Парсинг успешно завершён!');
     else toast.error('Парсинг завершён с ошибкой');
 
+    // === Сохраняем результат в localStorage ===
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('ozonParserJobId');
+      window.localStorage.removeItem('ozonParserJobId'); // ID больше не нужен
+      window.localStorage.setItem('ozonParserLastResult', JSON.stringify(info));
     }
+
     setJobId(null);
   }
 
-  // ЗАПУСК ПАРСИНГА
+  // === ЗАПУСК ПАРСИНГА ===
   async function startParsing(mode, links, file) {
     if (!links.length && !file) {
       toast('Добавьте хотя бы одну ссылку или файл');
@@ -97,7 +108,11 @@ export function useParserState() {
       return;
     }
 
+    // === Очищаем предыдущий результат ===
     setResp(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('ozonParserLastResult');
+    }
 
     try {
       const form = new FormData();
@@ -113,9 +128,11 @@ export function useParserState() {
         throw new Error(res.data.error || 'Ошибка запуска парсинга');
 
       setJobId(res.data.jobId);
+
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('ozonParserJobId', res.data.jobId);
       }
+
       toast('🚀 Парсер запущен!');
     } catch (err) {
       setLoading(false);
@@ -124,7 +141,7 @@ export function useParserState() {
     }
   }
 
-  // ОТМЕНА ПАРСИНГА
+  // === ОТМЕНА ПАРСИНГА ===
   async function cancelParsing() {
     if (!jobId) return;
 
