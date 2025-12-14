@@ -31,15 +31,22 @@ export default function ProcessInfo({ jobId, jobStatus, jobTimer }) {
 
   const queueText = isQueued ? `Перед вами задач: ${jobStatus.humanQueuePosition}` : null;
   const shortProcessLabel = jobStatus.id ? jobStatus.id.split('_')[0] : jobId?.split('_')[0] || '—';
-  const totalReviewsCount = jobStatus?.totalReviewsCount || 0;
-  const collectedReviews = jobStatus?.collectedReviews || 0;
+  const totalReviewsCount =
+    jobStatus?.totalReviewsCount !== null && jobStatus?.totalReviewsCount !== undefined
+      ? jobStatus.totalReviewsCount
+      : null;
+
+  const collectedReviews =
+    jobStatus?.collectedReviews !== null && jobStatus?.collectedReviews !== undefined
+      ? jobStatus.collectedReviews
+      : null;
 
   const progressReviewsText =
-    totalReviewsCount > 0
+    collectedReviews === null || totalReviewsCount === null
+      ? '- / -'
+      : totalReviewsCount > 0
       ? `${collectedReviews} / ${totalReviewsCount}`
-      : collectedReviews > 0
-      ? `${collectedReviews}`
-      : '—';
+      : `${collectedReviews}`;
 
   const urlsProgressText =
     jobStatus?.totalUrls > 0 ? `${jobStatus.processedUrls} / ${jobStatus.totalUrls}` : '—';
