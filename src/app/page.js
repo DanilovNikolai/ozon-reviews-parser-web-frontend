@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useParserState } from '@/hooks/useParserState';
 import { useLinksStorage } from '@/hooks/useLinksStorage';
 import { useClipboard } from '@/hooks/useClipboard';
+import { useParserState } from '@/hooks/useParserState';
+import { useAuthState } from '@/hooks/useAuthState';
 import { Toaster } from 'react-hot-toast';
 
 import ClipboardPopup from '@/components/ClipboardPopup';
@@ -13,12 +14,18 @@ import ModeSelect from '@/components/ModeSelect';
 import FormButton from '@/components/FormButton';
 import ProcessInfo from '@/components/ProcessInfo';
 import ResultInfo from '@/components/ResultInfo';
+import Header from '@/components/Header';
+import AuthModal from '@/components/AuthModal';
 
 export default function HomePage() {
   const [links, setLinks] = useState([]);
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState('3');
+  const [showAuth, setShowAuth] = useState(false);
   const inputRef = useRef(null);
+
+  // --- Хук управления состояниями авторизации ---
+  const { user, isAuth, login, register, logout } = useAuthState();
 
   // --- Хук управления состояниями процесса ---
   const { loading, resp, jobId, jobStatus, jobTimer, jobCancelling, startParsing, cancelParsing } =
@@ -43,6 +50,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
       <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
+
+      <Header user={user} onLoginClick={() => setShowAuth(true)} onLogout={logout} />
+
+      {showAuth && (
+        <AuthModal onClose={() => setShowAuth(false)} onLogin={login} onRegister={register} />
+      )}
 
       <ClipboardPopup
         url={clipboardUrl}
