@@ -4,63 +4,63 @@ import toast from 'react-hot-toast';
 
 export function useAuthState() {
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // === Загрузка текущего пользователя ===
+  // === Проверка текущей сессии ===
   useEffect(() => {
     async function fetchMe() {
       try {
         const res = await axios.get('/api/auth/me');
-        setUser(res.data.user);
+        if (res.data.success) {
+          setUser(res.data.user);
+        }
       } catch {
         setUser(null);
       } finally {
-        setAuthLoading(false);
+        setLoading(false);
       }
     }
 
     fetchMe();
   }, []);
 
-  // === ЛОГИН ===
-  async function login(email, password) {
-    try {
-      const res = await axios.post('/api/auth/login', { email, password });
-      setUser(res.data.user);
-      toast.success('Успешная авторизация');
-      return true;
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Ошибка авторизации');
-      return false;
-    }
-  }
-
-  // === РЕГИСТРАЦИЯ ===
+  // === Регистрация ===
   async function register(email, password) {
-    try {
-      const res = await axios.post('/api/auth/register', { email, password });
-      setUser(res.data.user);
-      toast.success('Регистрация успешна');
-      return true;
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Ошибка регистрации');
-      return false;
+    const res = await axios.post('/api/auth/register', { email, password });
+
+    if (!res.data.success) {
+      throw new Error(res.data.error || 'Ошибка регистрации');
     }
+
+    setUser(res.data.user);
+    toast.success('Регистрация успешна!');
   }
 
-  // === ВЫХОД ===
+  // === Логин ===
+  async function login(email, password) {
+    const res = await axios.post('/api/auth/login', { email, password });
+
+    if (!res.data.success) {
+      throw new Error(res.data.error || 'Ошибка авторизации');
+    }
+
+    setUser(res.data.user);
+    toast.success('Авторизация успешна!');
+  }
+
+  // === Логаут ===
   async function logout() {
     await axios.post('/api/auth/logout');
     setUser(null);
-    toast('Вы вышли из аккаунта');
+    toast('Вы вышли из системы');
   }
 
   return {
     user,
-    authLoading,
+    loading,
     isAuth: !!user,
-    login,
     register,
+    login,
     logout,
   };
 }
