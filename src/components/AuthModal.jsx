@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 
 export default function AuthModal({ onClose, onLogin, onRegister }) {
   const [mode, setMode] = useState('login');
@@ -30,7 +29,7 @@ export default function AuthModal({ onClose, onLogin, onRegister }) {
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
         >
-          {X}
+          X
         </button>
 
         <h3 className="text-lg font-semibold mb-4 text-center">
