@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLinksStorage } from '@/hooks/useLinksStorage';
 import { useClipboard } from '@/hooks/useClipboard';
 import { useParserState } from '@/hooks/useParserState';
@@ -41,6 +41,13 @@ export default function HomePage() {
     jobStatus,
     inputRef
   );
+
+  // === Закрываем модалку при успешной авторизации ===
+  useEffect(() => {
+    if (user) {
+      setShowAuth(false);
+    }
+  }, [user]);
 
   function handleSubmitForm(e) {
     e.preventDefault();

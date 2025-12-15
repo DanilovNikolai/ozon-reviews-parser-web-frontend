@@ -1,22 +1,38 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 export default function AuthModal({ onClose, onLogin, onRegister }) {
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
+    setLoading(true);
 
-    const ok =
-      mode === 'login' ? await onLogin(email, password) : await onRegister(email, password);
-
-    if (ok) onClose();
+    try {
+      if (mode === 'login') {
+        await onLogin(email, password);
+      } else {
+        await onRegister(email, password);
+      }
+    } catch (e) {
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
+      <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
+        >
+          {X}
+        </button>
+
         <h3 className="text-lg font-semibold mb-4 text-center">
           {mode === 'login' ? 'Вход' : 'Регистрация'}
         </h3>
@@ -40,7 +56,10 @@ export default function AuthModal({ onClose, onLogin, onRegister }) {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button className="w-full bg-blue-600 text-white rounded-lg py-2">
+          <button
+            disabled={loading}
+            className="w-full bg-blue-600 text-white rounded-lg py-2 disabled:opacity-60"
+          >
             {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </form>
