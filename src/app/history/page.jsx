@@ -81,9 +81,9 @@ export default function HistoryPage() {
                 <div className="flex justify-between">
                   <span className="font-semibold">
                     Запуск #{job.id} [
-                    <b className={statusColorMap[job?.status?.toLowerCase()]}>
+                    <span className={statusColorMap[job?.status?.toLowerCase()]}>
                       {formatStatusRu(job?.status?.toLowerCase())}
-                    </b>
+                    </span>
                     ]
                   </span>
                   <span className="text-gray-500">
@@ -104,7 +104,7 @@ export default function HistoryPage() {
                       rel="noopener noreferrer"
                       className="text-blue-600 underline font-medium break-all"
                     >
-                      скачать (в формате .xlsx)
+                      скачать
                     </a>
                   )}
                   )
