@@ -80,7 +80,13 @@ export default function HistoryPage() {
               <div key={job.id} className="border border-gray-200 rounded-lg p-4 text-sm space-y-1">
                 <div className="flex justify-between">
                   <span className="font-semibold">Запуск #{job.id}</span>
-                  <span className="text-gray-500">{job.finishedAt.toLocaleString()}</span>
+                  <span className="text-gray-500">
+                    {job.finishedAt
+                      ? new Date(job.finishedAt).toLocaleString('ru-RU', {
+                          timeZone: 'Europe/Moscow',
+                        })
+                      : '—'}
+                  </span>
                 </div>
 
                 {job.inputFileUrl && (
@@ -95,8 +101,8 @@ export default function HistoryPage() {
                 )}
 
                 <div>Режим: {job.mode}</div>
-                <div className={statusColorMap[job.status.toLowerCase()]}>
-                  Статус: {formatStatusRu(job.status.toLowerCase())}
+                <div className={statusColorMap[job?.status?.toLowerCase()]}>
+                  Статус: {formatStatusRu(job?.status?.toLowerCase())}
                 </div>
 
                 <div>
