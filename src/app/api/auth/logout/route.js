@@ -4,16 +4,26 @@ export async function POST(req) {
   try {
     const cookie = req.headers.get('cookie') || '';
 
-    const res = await fetch(`${process.env.SERVER_API_URL}/auth/logout`, {
+    const backendRes = await fetch(`${process.env.SERVER_API_URL}/auth/logout`, {
       method: 'POST',
-      headers: { cookie },
-      credentials: 'include',
+      headers: {
+        cookie,
+      },
     });
 
-    const data = await res.json();
+    const data = await backendRes.json();
 
-    return NextResponse.json(data, { status: res.status });
-  } catch {
+    const response = NextResponse.json(data, {
+      status: backendRes.status,
+    });
+
+    const setCookie = backendRes.headers.get('set-cookie');
+    if (setCookie) {
+      response.headers.set('set-cookie', setCookie);
+    }
+
+    return response;
+  } catch (e) {
     return NextResponse.json({ success: false, error: 'Auth proxy error' }, { status: 500 });
   }
 }
