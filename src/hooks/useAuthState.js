@@ -26,26 +26,36 @@ export function useAuthState() {
 
   // === Регистрация ===
   async function register(email, password) {
-    const res = await axios.post('/api/auth/register', { email, password });
+    try {
+      const res = await axios.post('/api/auth/register', { email, password });
 
-    if (!res.data.success) {
-      throw new Error(res.data.error || 'Ошибка регистрации');
+      if (!res.data.success) {
+        throw new Error(res.data.error || 'Ошибка регистрации');
+      }
+
+      setUser(res.data.user);
+      toast.success('Регистрация успешна!');
+    } catch (err) {
+      const message = err.response?.data?.error || err.message || 'Ошибка регистрации';
+      throw new Error(message);
     }
-
-    setUser(res.data.user);
-    toast.success('Регистрация успешна!');
   }
 
   // === Логин ===
   async function login(email, password) {
-    const res = await axios.post('/api/auth/login', { email, password });
+    try {
+      const res = await axios.post('/api/auth/login', { email, password });
 
-    if (!res.data.success) {
-      throw new Error(res.data.error || 'Ошибка авторизации');
+      if (!res.data.success) {
+        throw new Error(res.data.error || 'Ошибка авторизации');
+      }
+
+      setUser(res.data.user);
+      toast.success('Авторизация успешна!');
+    } catch (err) {
+      const message = err.response?.data?.error || err.message || 'Ошибка авторизации';
+      throw new Error(message);
     }
-
-    setUser(res.data.user);
-    toast.success('Авторизация успешна!');
   }
 
   // === Логаут ===
