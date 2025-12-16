@@ -71,10 +71,6 @@ export default function HomePage() {
       />
 
       <div className="w-full max-w-2xl bg-white shadow-md rounded-xl p-8">
-        <h1 className="text-3xl font-bold mb-4 text-blue-600 text-center">
-          🧩 Ozon Reviews Parser
-        </h1>
-
         <form onSubmit={handleSubmitForm} className="space-y-6">
           <LinksInput links={links} setLinks={setLinks} loading={loading} inputRef={inputRef} />
 
