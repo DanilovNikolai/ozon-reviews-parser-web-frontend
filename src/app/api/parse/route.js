@@ -70,9 +70,11 @@ export async function POST(req) {
     console.log('✅ Uploaded input file:', s3InputFileUrl);
 
     // --- Отправляем запрос на backend — только старт задачи ---
+    const cookie = req.headers.get('cookie') || '';
+
     const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', cookie },
       body: JSON.stringify({ s3InputFileUrl, mode }),
     });
 

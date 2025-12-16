@@ -16,8 +16,11 @@ export async function GET(req) {
       );
     }
 
+    const cookie = req.headers.get('cookie') || '';
+
     const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse/${jobId}/status`, {
       method: 'GET',
+      headers: { cookie },
     });
 
     let data;
@@ -60,8 +63,11 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: 'Неизвестное действие' }, { status: 400 });
     }
 
+    const cookie = req.headers.get('cookie') || '';
+
     const backendRes = await fetch(`${process.env.SERVER_API_URL}/parse/${jobId}/cancel`, {
       method: 'POST',
+      headers: { cookie },
     });
 
     let data;
