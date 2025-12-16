@@ -15,7 +15,7 @@ export default function Header({ user, onLoginClick, onLogout }) {
 
           <button
             className="text-blue-600 underline cursor-pointer"
-            onClick={() => (window.location.href = '/account')}
+            onClick={() => (window.location.href = '/history')}
           >
             История
           </button>
