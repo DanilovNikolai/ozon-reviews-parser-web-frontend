@@ -79,51 +79,54 @@ export default function HistoryPage() {
             {jobs.map((job) => (
               <div key={job.id} className="border border-gray-200 rounded-lg p-4 text-sm space-y-1">
                 <div className="flex justify-between">
-                  <span className="font-semibold">Запуск #{job.id}</span>
+                  <span className="font-semibold">
+                    Запуск #{job.id} [
+                    <b className={statusColorMap[job?.status?.toLowerCase()]}>
+                      {formatStatusRu(job?.status?.toLowerCase())}
+                    </b>
+                    ]
+                  </span>
                   <span className="text-gray-500">
-                    {job.finishedAt
-                      ? new Date(job.finishedAt).toLocaleString('ru-RU', {
+                    {job.createdAt
+                      ? new Date(job.createdAt).toLocaleString('ru-RU', {
                           timeZone: 'Europe/Moscow',
                         })
                       : '—'}
                   </span>
                 </div>
-
-                {job.inputFileUrl && (
-                  <a
-                    href={job.inputFileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline font-medium break-all"
-                  >
-                    Скачать введенные ссылки на товары (в формате .xlsx)
-                  </a>
-                )}
-
                 <div>Режим: {job.mode}</div>
-                <div className={statusColorMap[job?.status?.toLowerCase()]}>
-                  Статус: {formatStatusRu(job?.status?.toLowerCase())}
+                <div>
+                  Ссылок введено: {job.totalUrls} (
+                  {job.inputFileUrl && (
+                    <a
+                      href={job.inputFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline font-medium break-all"
+                    >
+                      скачать (в формате .xlsx)
+                    </a>
+                  )}
+                  )
                 </div>
 
-                <div>
-                  Ссылок введено: {job.totalUrls}, отзывов собрано: {job.collectedReviews}
-                </div>
+                <div>Отзывов собрано: {job.collectedReviews}</div>
 
                 {job.durationSeconds !== null && (
                   <div>Время обработки: {formatDuration(job.durationSeconds)}</div>
                 )}
-
                 {job.outputFileUrl && (
-                  <a
-                    href={job.outputFileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline font-medium break-all"
-                  >
-                    Скачать результат (в формате .xlsx)
-                  </a>
+                  <div>
+                    <a
+                      href={job.outputFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline font-medium break-all"
+                    >
+                      Скачать результат (в формате .xlsx)
+                    </a>
+                  </div>
                 )}
-
                 {job.error && <div className="text-red-600">Ошибка: {job.error}</div>}
               </div>
             ))}
