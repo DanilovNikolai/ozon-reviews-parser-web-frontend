@@ -46,7 +46,8 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">Добавить ссылку</label>
-      <div className="flex gap-2">
+
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           ref={inputRef}
           value={inputLink}
@@ -54,40 +55,42 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
           onKeyDown={handleKeyDown}
           onBlur={handleAddLink}
           type="text"
-          className="flex-grow border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
           placeholder="https://www.ozon.ru/product/..."
+          className="flex-grow border border-gray-300 rounded-lg p-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <button
           type="button"
           onClick={clearLinks}
           disabled={!links.length || loading}
-          className={`px-3 py-2 text-sm rounded-lg border transition ${
-            links.length && !loading
-              ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 cursor-pointer'
-              : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
-          }`}
+          className="
+            px-4 py-2 text-sm rounded-lg border transition sm:w-auto w-full cursor-pointer
+            bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
+          "
         >
           🧹 Очистить
         </button>
       </div>
 
       {links.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2 bg-gray-50 border border-gray-200 rounded-md p-3">
+        <div className="mt-3 max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 space-y-2">
           {links.map((link, i) => (
-            <span
+            <div
               key={i}
-              className="inline-flex items-center text-xs font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full border border-green-300"
+              className="flex items-center justify-between gap-2 rounded-md bg-green-50 border border-green-200 px-3 py-1.5 text-xs"
             >
-              ✅ {link}
+              <span className="truncate text-green-800 font-mono" title={link}>
+                {link}
+              </span>
+
               <button
                 type="button"
                 onClick={() => removeLink(link)}
-                className="ml-2 text-red-500 hover:text-red-700 cursor-pointer"
+                className="text-red-500 hover:text-red-700 cursor-pointer flex-shrink-0"
               >
                 ✕
               </button>
-            </span>
+            </div>
           ))}
         </div>
       )}

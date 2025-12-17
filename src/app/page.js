@@ -55,7 +55,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center py-12 bg-gray-50 relative">
+    <main className="min-h-screen flex flex-col items-center py-8 bg-gray-50 relative">
       <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
 
       <Header user={user} onLoginClick={() => setShowAuth(true)} onLogout={logout} />
