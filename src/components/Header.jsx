@@ -5,7 +5,7 @@ export default function Header({ user, onLoginClick, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="w-full px-3 sm:px-4 mb-6 relative">
+    <header className="w-full px-4 sm:px-8 mb-3 sm:mb-6 relative">
       <div className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3">
         {/* ЛОГО */}
         <h1 className="text-lg sm:text-xl font-semibold text-blue-600 whitespace-nowrap">

@@ -55,7 +55,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center py-8 bg-gray-50 relative">
+    <main className="min-h-screen flex flex-col items-center py-4 sm:py-8 bg-gray-50 relative">
       <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
 
       <Header user={user} onLoginClick={() => setShowAuth(true)} onLogout={logout} />
@@ -70,7 +70,7 @@ export default function HomePage() {
         onDecline={declineClipboardLink}
       />
 
-      <div className="w-full max-w-2xl bg-white shadow-md rounded-xl p-8">
+      <div className="w-full max-w-2xl bg-white shadow-md rounded-xl p-4 sm:p-8">
         <form onSubmit={handleSubmitForm} className="space-y-6">
           <LinksInput links={links} setLinks={setLinks} loading={loading} inputRef={inputRef} />
 
