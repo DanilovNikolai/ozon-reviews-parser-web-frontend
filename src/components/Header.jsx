@@ -15,22 +15,25 @@ export default function Header({ user, onLoginClick, onLogout }) {
         {/* DESKTOP */}
         {!user ? (
           <div className="hidden sm:block bg-white shadow-md rounded-xl px-4 py-2">
-            <button onClick={onLoginClick} className="text-sm text-blue-600 cursor-pointer">
+            <button
+              onClick={onLoginClick}
+              className="text-sm font-bold text-blue-600 cursor-pointer"
+            >
               Войти / Регистрация
             </button>
           </div>
         ) : (
           <div className="hidden sm:flex items-center gap-3 bg-white shadow-md rounded-xl px-4 py-2 text-sm whitespace-nowrap">
-            <span className="text-gray-700 max-w-[180px] truncate">{user.email}</span>
+            <span className="text-gray-700 font-bold max-w-[180px] truncate">{user.email}</span>
 
             <button
               onClick={() => (window.location.href = '/history')}
-              className="text-blue-600 cursor-pointer"
+              className="text-blue-600 font-bold cursor-pointer"
             >
               История
             </button>
 
-            <button onClick={onLogout} className="text-red-600 cursor-pointer">
+            <button onClick={onLogout} className="text-red-600 font-bold cursor-pointer">
               Выйти
             </button>
           </div>
@@ -39,7 +42,10 @@ export default function Header({ user, onLoginClick, onLogout }) {
         {/* MOBILE */}
         {!user ? (
           <div className="sm:hidden bg-white shadow-md rounded-xl px-4 py-2">
-            <button onClick={onLoginClick} className="text-sm text-blue-600 cursor-pointer">
+            <button
+              onClick={onLoginClick}
+              className="text-sm font-bold text-blue-600 cursor-pointer"
+            >
               Войти
             </button>
           </div>
@@ -56,8 +62,10 @@ export default function Header({ user, onLoginClick, onLogout }) {
 
       {/* MOBILE MENU */}
       {menuOpen && user && (
-        <div className="sm:hidden absolute right-3 top-full mt-2 w-56 bg-white shadow-lg rounded-xl border z-50">
-          <div className="px-4 py-3 text-sm text-gray-700 truncate border-b">{user.email}</div>
+        <div className="sm:hidden absolute right-3 top-full mt-2 w-44 bg-white shadow-lg rounded-xl border border-gray-300 z-50">
+          <div className="px-4 py-3 text-sm text-gray-700 truncate border-b-gray-300">
+            {user.email}
+          </div>
 
           <button
             onClick={() => {
