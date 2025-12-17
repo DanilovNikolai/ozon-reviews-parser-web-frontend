@@ -13,7 +13,7 @@ export default function ModeSelect({ mode, setMode, loading }) {
             appearance-none
             border border-gray-300
             rounded-lg
-            bg-white
+            bg-gray-50
             px-3 py-2 pr-9
 
             text-sm sm:text-base
@@ -22,8 +22,7 @@ export default function ModeSelect({ mode, setMode, loading }) {
 
             cursor-pointer
             focus:outline-none
-            focus:border-blue-500
-            focus:ring-2 focus:ring-blue-500/40
+            focus:ring-1 focus:ring-blue-600/40
             hover:border-gray-400
 
             disabled:bg-gray-100

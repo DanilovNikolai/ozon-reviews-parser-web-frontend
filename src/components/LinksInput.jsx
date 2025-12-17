@@ -45,7 +45,13 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Добавить ссылку</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {links.length > 0 ? (
+          <span>Добавлено ссылок: {links.length}</span>
+        ) : (
+          <span>Добавить ссылку</span>
+        )}
+      </label>
 
       <div className="flex flex-col sm:flex-row gap-2">
         <input
@@ -56,7 +62,7 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
           onBlur={handleAddLink}
           type="text"
           placeholder="https://www.ozon.ru/product/..."
-          className="flex-grow border border-gray-300 rounded-lg p-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-grow bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-600/40"
         />
 
         <button
@@ -64,8 +70,8 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
           onClick={clearLinks}
           disabled={!links.length || loading}
           className="
-            px-4 py-2 text-sm rounded-lg border transition sm:w-auto w-full cursor-pointer
-            bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
+            px-4 py-2 text-sm rounded-lg border border-gray-300 transition sm:w-auto w-full cursor-pointer
+            bg-gray-50 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
           "
         >
           🧹 Очистить
@@ -73,7 +79,7 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
       </div>
 
       {links.length > 0 && (
-        <div className="mt-3 max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 space-y-2">
+        <div className="mt-3 max-h-40 overflow-y-auto rounded-lg p-2 space-y-2">
           {links.map((link, i) => (
             <div
               key={i}

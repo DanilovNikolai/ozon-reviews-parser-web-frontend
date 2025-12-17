@@ -23,14 +23,14 @@ export default function FileInput({ file, setFile, loading }) {
           accept=".txt,.xlsx"
           disabled={loading}
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-60"
+          className="flex-grow text-gray-700 border border-gray-300 rounded-lg p-2 bg-gray-50 cursor-pointer file:mr-3 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-60"
         />
 
         {file && (
           <button
             type="button"
             onClick={clearFile}
-            className="px-3 py-3 text-sm bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition cursor-pointer"
+            className="px-3 py-3 text-sm bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-200 transition cursor-pointer"
           >
             🗑 Очистить
           </button>

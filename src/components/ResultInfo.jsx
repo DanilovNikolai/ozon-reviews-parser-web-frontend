@@ -5,7 +5,7 @@ export default function ResultInfo({ resp }) {
 
       {/* НЕТ РЕЗУЛЬТАТА */}
       {!resp ? (
-        <div className="bg-gray-100 p-4 rounded-lg text-gray-600 text-sm">
+        <div className="bg-gray-50 p-4 rounded-lg text-gray-600 text-sm border border-gray-300">
           — Результаты появятся здесь —
         </div>
       ) : resp.cancelled ? (
