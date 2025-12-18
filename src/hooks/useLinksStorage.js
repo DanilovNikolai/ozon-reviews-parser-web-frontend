@@ -31,8 +31,12 @@ export function useLinksStorage(links, setLinks, jobStatus) {
 
   // === Очистка после полного завершения процесса ===
   useEffect(() => {
-    if (!jobStatus) {
-      localStorage.removeItem(STORAGE_KEY);
+    if (!jobStatus) return;
+
+    if (jobStatus.status === 'completed') {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {}
     }
   }, [jobStatus]);
 }
