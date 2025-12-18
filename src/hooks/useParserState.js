@@ -16,13 +16,6 @@ export function useParserState() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const savedResult = window.localStorage.getItem('ozonParserLastResult');
-    if (savedResult) {
-      try {
-        setResp(JSON.parse(savedResult));
-      } catch {}
-    }
-
     const savedJobId = window.localStorage.getItem('ozonParserJobId');
     if (savedJobId) {
       setJobId(savedJobId);
@@ -94,8 +87,7 @@ export function useParserState() {
 
     // === Сохраняем результат в localStorage ===
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('ozonParserJobId'); // ID больше не нужен
-      window.localStorage.setItem('ozonParserLastResult', JSON.stringify(info));
+      window.localStorage.removeItem('ozonParserJobId');
     }
 
     setJobId(null);
@@ -115,9 +107,6 @@ export function useParserState() {
 
     // === Очищаем предыдущий результат ===
     setResp(null);
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('ozonParserLastResult');
-    }
 
     try {
       const form = new FormData();
