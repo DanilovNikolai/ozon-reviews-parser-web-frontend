@@ -131,7 +131,7 @@ export default function HistoryPage() {
                           rel="noopener noreferrer"
                           className="ml-2 text-blue-600 font-medium break-all"
                         >
-                          скачать
+                          (скачать)
                         </a>
                       )}
                     </div>
