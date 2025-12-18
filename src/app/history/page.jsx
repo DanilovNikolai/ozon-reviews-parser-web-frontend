@@ -10,6 +10,7 @@ export default function HistoryPage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedJobId, setExpandedJobId] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -30,6 +31,10 @@ export default function HistoryPage() {
 
     fetchHistory();
   }, [user]);
+
+  function toggleJob(id) {
+    setExpandedJobId((prev) => (prev === id ? null : id));
+  }
 
   // ===== Заглушка =====
   if (!authLoading && !user) {
@@ -67,7 +72,6 @@ export default function HistoryPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-6 px-3 sm:px-6">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow p-4 sm:p-6">
-        {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">История запусков</h1>
 
@@ -81,60 +85,79 @@ export default function HistoryPage() {
         ) : (
           <div className="space-y-4">
             {jobs.map((job) => (
-              <div key={job.id} className="border border-gray-200 rounded-lg p-4 text-sm space-y-2">
-                {/* Верх */}
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                  <div className="font-semibold">
-                    Запуск #{job.id}{' '}
-                    <span className={statusColorMap[job.status?.toLowerCase()]}>
-                      {formatStatusRu(job.status?.toLowerCase())}
+              <div
+                key={job.id}
+                className="border border-gray-200 rounded-lg text-sm overflow-hidden"
+              >
+                {/* ===== СВЁРНУТАЯ ШАПКА ===== */}
+                <button
+                  onClick={() => toggleJob(job.id)}
+                  className="w-full flex items-center justify-between p-3 sm:p-4 bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 text-left">
+                    <span className="font-semibold">Запуск #{job.id}</span>
+
+                    <span
+                      className={`text-xs font-medium ${statusColorMap[job.status.toLowerCase()]}`}
+                    >
+                      {formatStatusRu(job.status.toLowerCase())}
+                    </span>
+
+                    <span className="text-xs text-gray-500">
+                      {job.createdAt
+                        ? new Date(job.createdAt).toLocaleString('ru-RU', {
+                            timeZone: 'Europe/Moscow',
+                          })
+                        : '—'}
                     </span>
                   </div>
 
-                  <div className="text-gray-500 text-xs">
-                    {job.createdAt
-                      ? new Date(job.createdAt).toLocaleString('ru-RU', {
-                          timeZone: 'Europe/Moscow',
-                        })
-                      : '—'}
-                  </div>
-                </div>
+                  <span className="text-gray-400 text-lg">
+                    {expandedJobId === job.id ? '▲' : '▼'}
+                  </span>
+                </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                  <div>Режим: {job.mode}</div>
-                  <div>
-                    Отзывов собрано: <b>{job.collectedReviews}</b>
-                  </div>
-                  <div>
-                    Ссылок введено: {job.totalUrls}{' '}
-                    {job.inputFileUrl && (
-                      <a
-                        href={job.inputFileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 ml-1"
-                      >
-                        скачать
-                      </a>
+                {/* ===== РАСКРЫТОЕ СОДЕРЖИМОЕ ===== */}
+                {expandedJobId === job.id && (
+                  <div className="p-3 sm:p-4 space-y-2 bg-white">
+                    <div>Режим: {job.mode}</div>
+
+                    <div>
+                      Ссылок введено: {job.totalUrls}{' '}
+                      {job.inputFileUrl && (
+                        <a
+                          href={job.inputFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 text-blue-600 font-medium break-all"
+                        >
+                          скачать
+                        </a>
+                      )}
+                    </div>
+
+                    <div>Отзывов собрано: {job.collectedReviews}</div>
+
+                    {job.durationSeconds !== null && (
+                      <div>Время обработки: {formatDuration(job.durationSeconds)}</div>
                     )}
+
+                    {job.outputFileUrl && (
+                      <div>
+                        <a
+                          href={job.outputFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 font-medium break-all"
+                        >
+                          Скачать результат (.xlsx)
+                        </a>
+                      </div>
+                    )}
+
+                    {job.error && <div className="text-red-600">Ошибка: {job.error}</div>}
                   </div>
-                  {job.durationSeconds !== null && (
-                    <div>Время обработки: {formatDuration(job.durationSeconds)}</div>
-                  )}
-                </div>
-
-                {job.outputFileUrl && (
-                  <a
-                    href={job.outputFileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block mt-2 text-blue-600 break-all"
-                  >
-                    Скачать результат (.xlsx)
-                  </a>
                 )}
-
-                {job.error && <div className="text-red-600 mt-1">Ошибка: {job.error}</div>}
               </div>
             ))}
           </div>
