@@ -18,8 +18,8 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full px-4 sm:px-8 py-4 sm:py-8 relative">
-        <div className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3">
+      <header className="w-full py-4 sm:py-8 relative">
+        <div className="w-full flex items-center justify-between gap-3">
           {/* ЛОГО */}
           <h1 className="text-lg sm:text-xl font-semibold text-blue-600 whitespace-nowrap">
             🧩 Ozon Reviews Parser <span className="text-xs text-gray-600">v1.4</span>
