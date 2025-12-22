@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import ClearButton from './ui/ClearButton';
+import Input from './ui/Input';
 
 const ozonRegex = /^https:\/\/www\.ozon\.ru\/product\/[\w-]+/i;
 
@@ -45,7 +47,7 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="links">
         {links.length > 0 ? (
           <span>Добавлено ссылок: {links.length}</span>
         ) : (
@@ -54,28 +56,20 @@ export default function LinksInput({ links, setLinks, loading, inputRef }) {
       </label>
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <input
+        <Input
+          id="links"
           ref={inputRef}
           value={inputLink}
           onChange={(e) => setInputLink(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleAddLink}
-          type="text"
           placeholder="https://www.ozon.ru/product/..."
-          className="flex-grow bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-600/40"
+          mono
         />
 
-        <button
-          type="button"
-          onClick={clearLinks}
-          disabled={!links.length || loading}
-          className="
-            px-4 py-2 text-sm rounded-lg border border-gray-300 transition sm:w-auto w-full cursor-pointer
-            bg-gray-50 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
-          "
-        >
+        <ClearButton type="button" onClick={clearLinks} disabled={!links.length || loading}>
           🧹 Очистить
-        </button>
+        </ClearButton>
       </div>
 
       {links.length > 0 && (

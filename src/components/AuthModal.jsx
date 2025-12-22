@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Input from './ui/Input';
 
 export default function AuthModal({ onClose, onLogin, onRegister }) {
   const [mode, setMode] = useState('login');
@@ -59,22 +60,22 @@ export default function AuthModal({ onClose, onLogin, onRegister }) {
         )}
 
         <form onSubmit={submit} className="space-y-4">
-          <input
+          <Input
             type="email"
             required
             placeholder="Email"
-            className={inputClass(!!error)}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!error}
           />
 
-          <input
+          <Input
             type="password"
             required
             placeholder="Пароль"
-            className={inputClass(!!error)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!error}
           />
 
           <button
