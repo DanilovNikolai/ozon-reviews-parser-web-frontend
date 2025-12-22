@@ -4,6 +4,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { useAuthState } from '@/hooks/useAuthState';
 import { formatStatusRu, formatDuration, statusColorMap } from '@/utils/format';
+import MainWrapper from '@/components/MainWrapper';
 
 export default function HistoryPage() {
   const { user, loading: authLoading } = useAuthState();
@@ -39,8 +40,8 @@ export default function HistoryPage() {
   // ===== Заглушка =====
   if (!authLoading && !user) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-white p-6 rounded-xl shadow text-center space-y-3 max-w-sm w-full">
+      <MainWrapper className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-3 max-w-sm w-full">
           <h2 className="text-lg font-semibold">Вы не авторизованы</h2>
           <p className="text-sm text-gray-600">
             История запусков доступна только авторизованным пользователям
@@ -49,29 +50,29 @@ export default function HistoryPage() {
             ← Вернуться на главную
           </Link>
         </div>
-      </main>
+      </MainWrapper>
     );
   }
 
   if (authLoading || loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <MainWrapper className="min-h-screen flex items-center justify-center">
         <p className="text-gray-600">Загрузка истории…</p>
-      </main>
+      </MainWrapper>
     );
   }
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-red-600 px-4">
+      <MainWrapper className="min-h-screen flex items-center justify-center text-red-600 px-4">
         {error}
-      </main>
+      </MainWrapper>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-6 px-3 sm:px-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow p-4 sm:p-6">
+    <MainWrapper>
+      <div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">История запусков</h1>
 
@@ -163,6 +164,6 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
-    </main>
+    </MainWrapper>
   );
 }
