@@ -1,10 +1,13 @@
 export default function ModeSelect({ mode, setMode, loading }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Режим парсинга</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="mode">
+        Режим парсинга
+      </label>
 
       <div className="relative">
         <select
+          id="mode"
           value={mode}
           onChange={(e) => setMode(e.target.value)}
           disabled={loading}
