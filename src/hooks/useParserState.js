@@ -86,7 +86,10 @@ export function useParserState(userId) {
     } catch (err) {
       setLoading(false);
       toast.error('Ошибка запуска');
-      setResp({ success: false, error: err.message });
+      setResp({
+        success: false,
+        error: err.response?.data?.error || err.message || 'Ошибка запуска парсинга',
+      });
     }
   }
 
@@ -140,14 +143,17 @@ export function useParserState(userId) {
 
         setJobStatus(data);
 
-        const { status, s3OutputUrl, error } = data;
+        const { status, s3OutputUrl } = data;
 
         if (status === 'completed') {
           finishProcess({ success: true, s3OutputUrl, finishedAt: data.updatedAt });
         } else if (status === 'error') {
           finishProcess({
             success: false,
-            error,
+            error:
+              data.error ||
+              jobStatus?.error ||
+              'Waiting for selector `[data-widget="webListReviews"]` failed',
             s3OutputUrl,
             finishedAt: data.updatedAt,
           });
@@ -166,7 +172,7 @@ export function useParserState(userId) {
       stop = true;
       clearInterval(id);
     };
-  }, [jobId, finishProcess]);
+  }, [jobId, finishProcess, jobStatus?.error]);
 
   return {
     loading,

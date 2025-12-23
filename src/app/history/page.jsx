@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuthState } from '@/hooks/useAuthState';
 import { formatStatusRu, formatDuration, statusColorMap } from '@/utils/format';
 import MainWrapper from '@/components/MainWrapper';
+import { normalizeParserError } from '@/utils/normalizeError';
 
 export default function HistoryPage() {
   const { user, loading: authLoading } = useAuthState();
@@ -161,7 +162,19 @@ export default function HistoryPage() {
                       </div>
                     )}
 
-                    {job.error && <div className="text-red-600">Ошибка: {job.error}</div>}
+                    {job.error &&
+                      (() => {
+                        const err = normalizeParserError(job.error);
+                        return (
+                          <div
+                            className={
+                              err.severity === 'error' ? 'text-red-600' : 'text-yellow-700'
+                            }
+                          >
+                            Ошибка: {err.message}
+                          </div>
+                        );
+                      })()}
                   </div>
                 )}
               </div>

@@ -1,4 +1,8 @@
+import { normalizeParserError } from '@/utils/normalizeError';
+
 export default function ResultInfo({ resp }) {
+  const parsedError = resp?.error ? normalizeParserError(resp.error) : null;
+
   return (
     <section className="mt-6">
       <h3 className="text-lg font-semibold text-gray-700 mb-2">Результат</h3>
@@ -31,10 +35,15 @@ export default function ResultInfo({ resp }) {
           )}
         </div>
       ) : resp.error ? (
-        /* ОШИБКА */
-        <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg whitespace-pre-wrap text-sm">
+        <div
+          className={
+            parsedError.severity === 'error'
+              ? 'bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg text-sm text-center'
+              : 'bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm text-center'
+          }
+        >
           <strong className="block mb-1">Ошибка:</strong>
-          {resp.error}
+          {parsedError.message}
 
           {resp.finishedAt && (
             <p className="text-xs text-gray-500 mt-2">
@@ -47,7 +56,7 @@ export default function ResultInfo({ resp }) {
               href={resp.s3OutputUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block mt-3 text-blue-600 hover:text-blue-800 font-semibold underline break-all"
+              className="block mt-3 text-blue-600 font-semibold underline break-all"
             >
               Скачать Excel-файл (с ошибкой)
             </a>
@@ -79,7 +88,7 @@ export default function ResultInfo({ resp }) {
         </div>
       ) : (
         /* НЕОЖИДАННЫЙ СЛУЧАЙ */
-        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm">
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 p-4 rounded-lg text-sm text-center">
           Ответ получен, но ссылка не найдена.
         </div>
       )}
