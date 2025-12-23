@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const POLLING_INTERVAL = 5000;
 
-export function useParserState() {
+export function useParserState(userId) {
   const [loading, setLoading] = useState(false);
   const [resp, setResp] = useState(null);
   const [jobId, setJobId] = useState(null);
@@ -12,17 +12,32 @@ export function useParserState() {
   const [jobTimer, setJobTimer] = useState(Date.now());
   const [jobCancelling, setJobCancelling] = useState(false);
 
+  function getJobStorageKey(userId) {
+    return userId ? `ozonParserJobId:${userId}` : null;
+  }
+
   // === ВОССТАНОВЛЕНИЕ РЕЗУЛЬТАТА ===
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!userId) {
+      setJobId(null);
+      setJobStatus(null);
+      setResp(null);
+      setLoading(false);
+      setJobCancelling(false);
+      return;
+    }
 
-    const savedJobId = window.localStorage.getItem('ozonParserJobId');
+    const savedJobId = window.localStorage.getItem(getJobStorageKey(userId));
     if (savedJobId) {
       setJobId(savedJobId);
       setLoading(true);
       toast('🔄 Восстанавливаем статус предыдущего парсинга...');
+    } else {
+      setJobId(null);
+      setJobStatus(null);
     }
-  }, []);
+  }, [userId]);
 
   // === ТАЙМЕР ===
   useEffect(() => {
@@ -30,6 +45,84 @@ export function useParserState() {
     const id = setInterval(() => setJobTimer(Date.now()), 1000);
     return () => clearInterval(id);
   }, [jobId]);
+
+  // === ЗАПУСК ПАРСИНГА ===
+  async function startParsing(mode, links, file) {
+    if (!links.length && !file) {
+      toast('Добавьте хотя бы одну ссылку или файл');
+      return;
+    }
+
+    if (jobId) {
+      toast('Процесс уже запущен. Сначала остановите его.');
+      return;
+    }
+
+    // === Очищаем предыдущий результат ===
+    setResp(null);
+
+    try {
+      const form = new FormData();
+      form.append('mode', mode);
+      form.append('linksText', links.join('\n'));
+      if (file) form.append('file', file);
+
+      setLoading(true);
+
+      const res = await axios.post('/api/parse', form);
+
+      if (!res.data.success || !res.data.jobId)
+        throw new Error(res.data.error || 'Ошибка запуска парсинга');
+
+      setJobId(res.data.jobId);
+
+      if (typeof window !== 'undefined') {
+        if (userId) {
+          window.localStorage.setItem(getJobStorageKey(userId), res.data.jobId);
+        }
+      }
+
+      toast('🚀 Парсер запущен!');
+    } catch (err) {
+      setLoading(false);
+      toast.error('Ошибка запуска');
+      setResp({ success: false, error: err.message });
+    }
+  }
+
+  // === ЗАВЕРШЕНИЕ ПРОЦЕССА ===
+  const finishProcess = useCallback(
+    (info) => {
+      setLoading(false);
+      setResp(info);
+
+      if (info.cancelled) toast('⏹ Парсинг отменён');
+      else if (info.success) toast.success('Парсинг успешно завершён!');
+      else toast.error('Парсинг завершён с ошибкой');
+
+      if (userId) {
+        localStorage.removeItem(getJobStorageKey(userId));
+      }
+
+      setJobId(null);
+    },
+    [userId]
+  );
+
+  // === ОТМЕНА ПАРСИНГА ===
+  async function cancelParsing() {
+    if (!jobId) return;
+
+    try {
+      setJobCancelling(true);
+      await axios.post('/api/status', { jobId, action: 'cancel' });
+      toast('⏹ Запросили остановку...');
+    } catch (e) {
+      toast.error('Не удалось отправить отмену');
+    } finally {
+      setJobCancelling(false);
+    }
+  }
 
   // === ПОЛЛИНГ СТАТУСА ===
   useEffect(() => {
@@ -73,82 +166,7 @@ export function useParserState() {
       stop = true;
       clearInterval(id);
     };
-  }, [jobId]);
-
-  // === ЗАВЕРШЕНИЕ ПРОЦЕССА ===
-  function finishProcess(info) {
-    setLoading(false);
-    setResp(info);
-
-    // === toast уведомления ===
-    if (info.cancelled) toast('⏹ Парсинг отменён');
-    else if (info.success) toast.success('Парсинг успешно завершён!');
-    else toast.error('Парсинг завершён с ошибкой');
-
-    // === Сохраняем результат в localStorage ===
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('ozonParserJobId');
-    }
-
-    setJobId(null);
-  }
-
-  // === ЗАПУСК ПАРСИНГА ===
-  async function startParsing(mode, links, file) {
-    if (!links.length && !file) {
-      toast('Добавьте хотя бы одну ссылку или файл');
-      return;
-    }
-
-    if (jobId) {
-      toast('Процесс уже запущен. Сначала остановите его.');
-      return;
-    }
-
-    // === Очищаем предыдущий результат ===
-    setResp(null);
-
-    try {
-      const form = new FormData();
-      form.append('mode', mode);
-      form.append('linksText', links.join('\n'));
-      if (file) form.append('file', file);
-
-      setLoading(true);
-
-      const res = await axios.post('/api/parse', form);
-
-      if (!res.data.success || !res.data.jobId)
-        throw new Error(res.data.error || 'Ошибка запуска парсинга');
-
-      setJobId(res.data.jobId);
-
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('ozonParserJobId', res.data.jobId);
-      }
-
-      toast('🚀 Парсер запущен!');
-    } catch (err) {
-      setLoading(false);
-      toast.error('Ошибка запуска');
-      setResp({ success: false, error: err.message });
-    }
-  }
-
-  // === ОТМЕНА ПАРСИНГА ===
-  async function cancelParsing() {
-    if (!jobId) return;
-
-    try {
-      setJobCancelling(true);
-      await axios.post('/api/status', { jobId, action: 'cancel' });
-      toast('⏹ Запросили остановку...');
-    } catch (e) {
-      toast.error('Не удалось отправить отмену');
-    } finally {
-      setJobCancelling(false);
-    }
-  }
+  }, [jobId, finishProcess]);
 
   return {
     loading,
