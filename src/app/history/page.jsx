@@ -14,6 +14,11 @@ export default function HistoryPage() {
   const [expandedJobId, setExpandedJobId] = useState(null);
 
   useEffect(() => {
+    setJobs([]);
+    setError(null);
+    setExpandedJobId(null);
+    setLoading(true);
+
     if (!user) return;
 
     async function fetchHistory() {
@@ -31,7 +36,7 @@ export default function HistoryPage() {
     }
 
     fetchHistory();
-  }, [user]);
+  }, [user?.id]);
 
   function toggleJob(id) {
     setExpandedJobId((prev) => (prev === id ? null : id));

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 export function useAuthState() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // === Проверка текущей сессии ===
   useEffect(() => {
@@ -63,6 +65,7 @@ export function useAuthState() {
     await axios.post('/api/auth/logout');
     setUser(null);
     toast('Вы вышли из системы');
+    router.push('/');
   }
 
   return {
