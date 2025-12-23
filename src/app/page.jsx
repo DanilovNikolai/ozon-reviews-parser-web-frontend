@@ -5,6 +5,8 @@ import { useLinksStorage } from '@/hooks/useLinksStorage';
 import { useClipboard } from '@/hooks/useClipboard';
 import { useParserState } from '@/hooks/useParserState';
 
+import { useAuth } from './context/AuthContext';
+
 import ClipboardPopup from '@/components/ClipboardPopup';
 import FileInput from '@/components/FileInput';
 import LinksInput from '@/components/LinksInput';
@@ -20,9 +22,12 @@ export default function HomePage() {
   const [mode, setMode] = useState('3');
   const inputRef = useRef(null);
 
+  // --- Хук управления состояниями пользователя ---
+  const { user } = useAuth();
+
   // --- Хук управления состояниями процесса ---
   const { loading, resp, jobId, jobStatus, jobTimer, jobCancelling, startParsing, cancelParsing } =
-    useParserState();
+    useParserState(user?.id);
 
   // --- Хук локального хранения ссылок ---
   useLinksStorage(links, setLinks, jobStatus);

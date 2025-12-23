@@ -1,13 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAuthState } from '@/hooks/useAuthState';
 import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   // --- Хук управления состояниями авторизации ---
-  const { user, logout, login, register } = useAuthState();
+  const { user, logout, login, register } = useAuth();
 
   // === Закрываем модалку при успешной авторизации ===
   useEffect(() => {
