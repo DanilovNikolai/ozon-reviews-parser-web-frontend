@@ -2,17 +2,17 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/app/context/AuthContext';
 import { formatStatusRu, formatDuration, statusColorMap } from '@/utils/format';
 import MainWrapper from '@/components/MainWrapper';
 import { normalizeParserError } from '@/utils/normalizeError';
 
 export default function HistoryPage() {
-  const { user, loading: authLoading } = useAuthState();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedJobId, setExpandedJobId] = useState(null);
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     setJobs([]);
