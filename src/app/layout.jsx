@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
 import PageWrapper from '@/components/PageWrapper';
+import { getCurrentUser } from '@/utils/getCurrentUser';
 import { AuthProvider } from './context/AuthContext';
 import './globals.css';
 
@@ -20,11 +21,14 @@ export const metadata = {
   description: 'Parser for reviews from ozon.ru',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Инициализация юзера до загрузки страницы
+  const user = await getCurrentUser();
+
   return (
     <html lang="ru">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
+        <AuthProvider initialUser={user}>
           <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
           <PageWrapper>
             <Header className="mb-3 sm:mb-6" />
