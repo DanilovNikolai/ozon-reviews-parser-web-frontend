@@ -1,30 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-export function useAuthState() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export function useAuthState(initialUser) {
+  const [user, setUser] = useState(initialUser);
   const router = useRouter();
-
-  // === Проверка текущей сессии ===
-  useEffect(() => {
-    async function fetchMe() {
-      try {
-        const res = await axios.get('/api/auth/me');
-        if (res.data.success) {
-          setUser(res.data.user);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMe();
-  }, []);
 
   // === Регистрация ===
   async function register(email, password) {
@@ -70,7 +51,6 @@ export function useAuthState() {
 
   return {
     user,
-    loading,
     isAuth: !!user,
     register,
     login,
