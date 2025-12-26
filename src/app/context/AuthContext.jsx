@@ -4,8 +4,8 @@ import { useAuthState } from '@/hooks/useAuthState';
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const auth = useAuthState();
+export function AuthProvider({ initialUser, children }) {
+  const auth = useAuthState(initialUser);
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }
 
