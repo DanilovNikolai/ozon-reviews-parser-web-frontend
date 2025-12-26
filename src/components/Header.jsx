@@ -2,13 +2,12 @@
 import { useState, useEffect } from 'react';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/app/context/AuthContext';
-import { UserMenuSkeleton } from './ui/UserMenuSkeleton';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
-  const { user, logout, login, register, loading } = useAuth();
+  const { user, logout, login, register } = useAuth();
 
   useEffect(() => {
     if (user) setShowAuth(false);
@@ -25,24 +24,8 @@ export default function Header() {
 
           {/* ================= МЕНЮ ПОЛЬЗОВАТЕЛЯ ================= */}
 
-          {/* === ПРИ ЗАГРУЗКЕ === */}
-          {loading && (
-            <>
-              {/* DESKTOP */}
-              <UserMenuSkeleton />
-
-              {/* MOBILE */}
-              <button
-                className="sm:hidden bg-white shadow-md rounded-xl px-3 py-2 text-xl cursor-default"
-                aria-label="Меню"
-              >
-                ☰
-              </button>
-            </>
-          )}
-
-          {/* === ЕСЛИ НЕ АВТОРИЗОВАН И НЕТ ЗАГРУЗКИ === */}
-          {!loading && !user && (
+          {/* === ГОСТЬ === */}
+          {!user && (
             <>
               {/* DESKTOP */}
               <div className="hidden sm:block bg-white shadow-md rounded-xl px-4 py-2">
@@ -66,8 +49,8 @@ export default function Header() {
             </>
           )}
 
-          {/* === ЕСЛИ АВТОРИЗОВАН И НЕТ ЗАГРУЗКИ === */}
-          {!loading && user && (
+          {/* === ЮЗЕР === */}
+          {user && (
             <>
               {/* DESKTOP */}
               <div className="hidden sm:flex items-center gap-3 bg-white shadow-md rounded-xl px-4 py-2 text-sm whitespace-nowrap">
@@ -98,7 +81,7 @@ export default function Header() {
         </div>
 
         {/* ================= МЕНЮ БУРГЕР ================= */}
-        {!loading && menuOpen && user && (
+        {user && menuOpen && (
           <div className="sm:hidden absolute right-3 top-full mt-2 w-44 bg-white shadow-lg rounded-xl border border-gray-300 z-50">
             <div className="px-4 py-3 text-sm text-gray-700 truncate border-b border-gray-200">
               {user.email}
